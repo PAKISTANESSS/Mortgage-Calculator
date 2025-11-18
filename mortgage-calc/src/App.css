@@ -272,6 +272,102 @@ button {
   font-weight: 600;
 }
 
+/* Pie Chart */
+.chart-container {
+  margin-top: 1rem;
+}
+
+.pie-chart-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  padding: 2rem;
+  background: #f7fafc;
+  border-radius: 15px;
+}
+
+.pie-chart {
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pie-chart-center {
+  width: 150px;
+  height: 150px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pie-chart-total {
+  font-size: 0.9rem;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.pie-chart-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-top: 0.25rem;
+}
+
+.chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.legend-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.legend-label {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.legend-value {
+  color: #4a5568;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.legend-percent {
+  color: #718096;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 /* Amortization Table */
 .amortization-table-wrapper {
   overflow-x: auto;
@@ -410,6 +506,30 @@ button {
 
   .amortization-table th {
     font-size: 0.7rem;
+  }
+
+  .pie-chart-wrapper {
+    flex-direction: column;
+    gap: 2rem;
+    padding: 1.5rem;
+  }
+
+  .pie-chart {
+    width: 200px;
+    height: 200px;
+  }
+
+  .pie-chart-center {
+    width: 120px;
+    height: 120px;
+  }
+
+  .pie-chart-amount {
+    font-size: 1.2rem;
+  }
+
+  .chart-legend {
+    width: 100%;
   }
 }
 

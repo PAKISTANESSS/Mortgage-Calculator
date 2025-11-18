@@ -12,6 +12,7 @@ function App() {
   const [amortizationSchedule, setAmortizationSchedule] = useState([])
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
   const [isInsuranceExpanded, setIsInsuranceExpanded] = useState(false)
+  const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(true)
 
   const calculateMortgage = () => {
     const principal = parseFloat(loanAmount)
@@ -310,6 +311,112 @@ function App() {
                   })}</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Payment Breakdown Chart */}
+          {amortizationSchedule.length > 0 && (
+            <div className="section amortization-section">
+              <h2 
+                className="section-title collapsible" 
+                onClick={() => setIsBreakdownExpanded(!isBreakdownExpanded)}
+              >
+                📈 Payment Breakdown
+                <span className="collapse-icon">{isBreakdownExpanded ? '▼' : '▶'}</span>
+              </h2>
+              
+              {isBreakdownExpanded && (() => {
+                // Calculate totals from schedule
+                const totalPrincipal = parseFloat(loanAmount)
+                const totalInterest = (monthlyPayment * parseInt(months)) - totalPrincipal - ((parseFloat(lifeInsurance) || 0) + (parseFloat(houseInsurance) || 0)) * parseInt(months)
+                const totalInsurance = ((parseFloat(lifeInsurance) || 0) + (parseFloat(houseInsurance) || 0)) * parseInt(months)
+                const grandTotal = totalPrincipal + totalInterest + totalInsurance
+                
+                // Calculate percentages
+                const principalPercent = (totalPrincipal / grandTotal) * 100
+                const interestPercent = (totalInterest / grandTotal) * 100
+                const insurancePercent = (totalInsurance / grandTotal) * 100
+                
+                return (
+                  <div className="chart-container">
+                    <div className="pie-chart-wrapper">
+                      <div 
+                        className="pie-chart"
+                        style={{
+                          background: totalInsurance > 0 
+                            ? `conic-gradient(
+                                from 0deg,
+                                #667eea 0deg ${principalPercent * 3.6}deg,
+                                #f093fb ${principalPercent * 3.6}deg ${(principalPercent + interestPercent) * 3.6}deg,
+                                #4facfe ${(principalPercent + interestPercent) * 3.6}deg 360deg
+                              )`
+                            : `conic-gradient(
+                                from 0deg,
+                                #667eea 0deg ${principalPercent * 3.6}deg,
+                                #f093fb ${principalPercent * 3.6}deg 360deg
+                              )`
+                        }}
+                      >
+                        <div className="pie-chart-center">
+                          <div className="pie-chart-total">Total</div>
+                          <div className="pie-chart-amount">
+                            €{grandTotal.toLocaleString('pt-PT', { 
+                              minimumFractionDigits: 0, 
+                              maximumFractionDigits: 0 
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="chart-legend">
+                        <div className="legend-item">
+                          <span className="legend-color" style={{ backgroundColor: '#667eea' }}></span>
+                          <div className="legend-details">
+                            <span className="legend-label">Principal</span>
+                            <span className="legend-value">
+                              €{totalPrincipal.toLocaleString('pt-PT', { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              })}
+                            </span>
+                            <span className="legend-percent">{principalPercent.toFixed(1)}%</span>
+                          </div>
+                        </div>
+                        
+                        <div className="legend-item">
+                          <span className="legend-color" style={{ backgroundColor: '#f093fb' }}></span>
+                          <div className="legend-details">
+                            <span className="legend-label">Interest</span>
+                            <span className="legend-value">
+                              €{totalInterest.toLocaleString('pt-PT', { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              })}
+                            </span>
+                            <span className="legend-percent">{interestPercent.toFixed(1)}%</span>
+                          </div>
+                        </div>
+                        
+                        {totalInsurance > 0 && (
+                          <div className="legend-item">
+                            <span className="legend-color" style={{ backgroundColor: '#4facfe' }}></span>
+                            <div className="legend-details">
+                              <span className="legend-label">Insurance</span>
+                              <span className="legend-value">
+                                €{totalInsurance.toLocaleString('pt-PT', { 
+                                  minimumFractionDigits: 2, 
+                                  maximumFractionDigits: 2 
+                                })}
+                              </span>
+                              <span className="legend-percent">{insurancePercent.toFixed(1)}%</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
 
