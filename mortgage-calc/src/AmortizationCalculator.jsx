@@ -82,6 +82,7 @@ function AmortizationCalculator() {
     let yearlyPrincipal = 0
     let yearlyInterest = 0
     let yearlyInsurance = 0
+    let yearlyExtraAmortization = 0
     let yearlyTotal = 0
 
     for (let i = 1; i <= numberOfMonths; i++) {
@@ -135,9 +136,10 @@ function AmortizationCalculator() {
         isYearlySummary: false
       })
 
-      yearlyPrincipal += principalPayment + extraAmortization
+      yearlyPrincipal += principalPayment
       yearlyInterest += interestPayment
       yearlyInsurance += totalInsurance
+      yearlyExtraAmortization += extraAmortization
       yearlyTotal += payment + totalInsurance + extraAmortization
       
       // Stop if balance reaches 0
@@ -152,7 +154,7 @@ function AmortizationCalculator() {
           principal: yearlyPrincipal,
           interest: yearlyInterest,
           insurance: yearlyInsurance,
-          extraAmortization: 0, // Not shown in summary, included in principal
+          extraAmortization: yearlyExtraAmortization,
           totalPayment: yearlyTotal,
           balance: Math.max(0, remainingBalance),
           isYearlySummary: true
@@ -160,6 +162,7 @@ function AmortizationCalculator() {
         yearlyPrincipal = 0
         yearlyInterest = 0
         yearlyInsurance = 0
+        yearlyExtraAmortization = 0
         yearlyTotal = 0
       }
     }
@@ -173,7 +176,7 @@ function AmortizationCalculator() {
         principal: yearlyPrincipal,
         interest: yearlyInterest,
         insurance: yearlyInsurance,
-        extraAmortization: 0, // Not shown in summary, included in principal
+        extraAmortization: yearlyExtraAmortization,
         totalPayment: yearlyTotal,
         balance: Math.max(0, remainingBalance),
         isYearlySummary: true
