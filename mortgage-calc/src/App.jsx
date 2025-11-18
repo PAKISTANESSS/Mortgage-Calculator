@@ -7,6 +7,8 @@ function App() {
   const [euribor, setEuribor] = useState('')
   const [spread, setSpread] = useState('')
   const [monthlyPayment, setMonthlyPayment] = useState(null)
+  const [amortizationSchedule, setAmortizationSchedule] = useState([])
+  const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
 
   const calculateMortgage = () => {
     const principal = parseFloat(loanAmount)
@@ -35,6 +37,26 @@ function App() {
     }
 
     setMonthlyPayment(payment)
+
+    // Generate amortization schedule
+    const schedule = []
+    let remainingBalance = principal
+
+    for (let i = 1; i <= numberOfMonths; i++) {
+      const interestPayment = remainingBalance * monthlyRate
+      const principalPayment = payment - interestPayment
+      remainingBalance -= principalPayment
+
+      schedule.push({
+        month: i,
+        payment: payment,
+        principal: principalPayment,
+        interest: interestPayment,
+        balance: Math.max(0, remainingBalance) // Avoid negative balance due to rounding
+      })
+    }
+
+    setAmortizationSchedule(schedule)
   }
 
   const resetCalculator = () => {
@@ -43,6 +65,7 @@ function App() {
     setEuribor('')
     setSpread('')
     setMonthlyPayment(null)
+    setAmortizationSchedule([])
   }
 
   return (
@@ -54,69 +77,75 @@ function App() {
         </header>
 
         <div className="calculator-card">
-          <div className="input-group">
-            <label htmlFor="loanAmount">
-              <span className="label-text">Loan Amount</span>
-              <span className="label-unit">€</span>
-            </label>
-            <input
-              id="loanAmount"
-              type="number"
-              value={loanAmount}
-              onChange={(e) => setLoanAmount(e.target.value)}
-              placeholder="250000"
-              min="0"
-              step="1000"
-            />
-          </div>
-
-          <div className="input-group">
-            <label htmlFor="months">
-              <span className="label-text">Loan Term</span>
-              <span className="label-unit">months</span>
-            </label>
-            <input
-              id="months"
-              type="number"
-              value={months}
-              onChange={(e) => setMonths(e.target.value)}
-              placeholder="360"
-              min="1"
-              step="1"
-            />
-          </div>
-
-          <div className="input-row">
+          {/* Basic Section */}
+          <div className="section">
+            <h2 className="section-title">📋 Basic Information</h2>
+            
             <div className="input-group">
-              <label htmlFor="euribor">
-                <span className="label-text">Euribor Rate</span>
-                <span className="label-unit">%</span>
+              <label htmlFor="loanAmount">
+                <span className="label-text">Loan Amount</span>
+                <span className="label-unit">€</span>
               </label>
               <input
-                id="euribor"
+                id="loanAmount"
                 type="number"
-                value={euribor}
-                onChange={(e) => setEuribor(e.target.value)}
-                placeholder="3.5"
+                value={loanAmount}
+                onChange={(e) => setLoanAmount(e.target.value)}
+                placeholder="250000"
                 min="0"
-                step="0.01"
+                step="1000"
               />
             </div>
 
             <div className="input-group">
-              <label htmlFor="spread">
-                <span className="label-text">Spread</span>
-                <span className="label-unit">%</span>
+              <label htmlFor="months">
+                <span className="label-text">Loan Term</span>
+                <span className="label-unit">months</span>
               </label>
               <input
-                id="spread"
+                id="months"
                 type="number"
-                value={spread}
-                onChange={(e) => setSpread(e.target.value)}
-                placeholder="1.0"
-                min="0"
-                step="0.01"
+                value={months}
+                onChange={(e) => setMonths(e.target.value)}
+                placeholder="360"
+                min="1"
+                step="1"
               />
+            </div>
+
+            <div className="input-row">
+              <div className="input-group">
+                <label htmlFor="euribor">
+                  <span className="label-text">Euribor Rate</span>
+                  <span className="label-unit">%</span>
+                </label>
+                <input
+                  id="euribor"
+                  type="number"
+                  value={euribor}
+                  onChange={(e) => setEuribor(e.target.value)}
+                  placeholder="3.5"
+                  min="0"
+                  step="0.01"
+                />
+                <span className="input-hint">💡 Euribor rates change frequently.</span>
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="spread">
+                  <span className="label-text">Spread</span>
+                  <span className="label-unit">%</span>
+                </label>
+                <input
+                  id="spread"
+                  type="number"
+                  value={spread}
+                  onChange={(e) => setSpread(e.target.value)}
+                  placeholder="1.0"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
             </div>
           </div>
 
@@ -160,11 +189,60 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* Payment Schedule Section */}
+          {amortizationSchedule.length > 0 && (
+            <div className="section amortization-section">
+              <h2 
+                className="section-title collapsible" 
+                onClick={() => setIsScheduleExpanded(!isScheduleExpanded)}
+              >
+                📊 Payment Schedule
+                <span className="collapse-icon">{isScheduleExpanded ? '▼' : '▶'}</span>
+              </h2>
+
+              {isScheduleExpanded && (
+                <div className="amortization-table-wrapper">
+                  <table className="amortization-table">
+                    <thead>
+                      <tr>
+                        <th>Month</th>
+                        <th>Payment</th>
+                        <th>Principal</th>
+                        <th>Interest</th>
+                        <th>Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {amortizationSchedule.map((row) => (
+                        <tr key={row.month}>
+                          <td>{row.month}</td>
+                          <td>€{row.payment.toLocaleString('pt-PT', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}</td>
+                          <td>€{row.principal.toLocaleString('pt-PT', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}</td>
+                          <td>€{row.interest.toLocaleString('pt-PT', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}</td>
+                          <td>€{row.balance.toLocaleString('pt-PT', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        <footer>
-          <p>💡 Tip: Euribor rates change frequently. Check the current rate before calculations.</p>
-        </footer>
       </div>
     </div>
   )
