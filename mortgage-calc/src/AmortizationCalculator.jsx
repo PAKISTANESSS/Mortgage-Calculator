@@ -228,7 +228,6 @@ function AmortizationCalculator() {
                       <select
                         value={rule.type || 'recurring'}
                         onChange={(e) => updateAmortizationRule(index, 'type', e.target.value)}
-                        style={{ width: '110px' }}
                       >
                         <option value="recurring">Recurring</option>
                         <option value="onetime">One-time</option>
@@ -251,7 +250,6 @@ function AmortizationCalculator() {
                             placeholder="10"
                             min="1"
                             max="12"
-                            style={{ width: '70px' }}
                           />
                         </div>
                         
@@ -263,7 +261,6 @@ function AmortizationCalculator() {
                             onChange={(e) => updateAmortizationRule(index, 'year', e.target.value)}
                             placeholder="4"
                             min="1"
-                            style={{ width: '70px' }}
                           />
                         </div>
                       </>
@@ -277,7 +274,6 @@ function AmortizationCalculator() {
                             onChange={(e) => updateAmortizationRule(index, 'frequency', e.target.value)}
                             placeholder="2"
                             min="1"
-                            style={{ width: '80px' }}
                           />
                         </div>
                         
@@ -285,7 +281,6 @@ function AmortizationCalculator() {
                           <select
                             value={rule.period}
                             onChange={(e) => updateAmortizationRule(index, 'period', e.target.value)}
-                            style={{ width: '100px' }}
                           >
                             <option value="month">Month(s)</option>
                             <option value="year">Year(s)</option>
@@ -303,7 +298,6 @@ function AmortizationCalculator() {
                         placeholder="500"
                         min="0"
                         step="100"
-                        style={{ width: '120px' }}
                       />
                       <span style={{ marginLeft: '0.5rem', color: '#4a5568', fontWeight: '600', fontSize: '1rem' }}>€</span>
                     </div>
