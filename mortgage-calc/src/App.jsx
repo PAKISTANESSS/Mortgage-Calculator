@@ -6,15 +6,20 @@ function App() {
   const [months, setMonths] = useState('')
   const [euribor, setEuribor] = useState('')
   const [spread, setSpread] = useState('')
+  const [lifeInsurance, setLifeInsurance] = useState('')
+  const [houseInsurance, setHouseInsurance] = useState('')
   const [monthlyPayment, setMonthlyPayment] = useState(null)
   const [amortizationSchedule, setAmortizationSchedule] = useState([])
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
+  const [isInsuranceExpanded, setIsInsuranceExpanded] = useState(false)
 
   const calculateMortgage = () => {
     const principal = parseFloat(loanAmount)
     const numberOfMonths = parseInt(months)
     const euriborRate = parseFloat(euribor)
     const spreadRate = parseFloat(spread)
+    const life = parseFloat(lifeInsurance) || 0
+    const house = parseFloat(houseInsurance) || 0
 
     // Validate inputs
     if (!principal || !numberOfMonths || isNaN(euriborRate) || isNaN(spreadRate)) {
@@ -36,7 +41,10 @@ function App() {
       payment = (principal * monthlyRate * x) / (x - 1)
     }
 
-    setMonthlyPayment(payment)
+    // Total insurance per month
+    const totalInsurance = life + house
+
+    setMonthlyPayment(payment + totalInsurance)
 
     // Generate amortization schedule
     const schedule = []
@@ -52,6 +60,8 @@ function App() {
         payment: payment,
         principal: principalPayment,
         interest: interestPayment,
+        insurance: totalInsurance,
+        totalPayment: payment + totalInsurance,
         balance: Math.max(0, remainingBalance) // Avoid negative balance due to rounding
       })
     }
@@ -64,6 +74,8 @@ function App() {
     setMonths('')
     setEuribor('')
     setSpread('')
+    setLifeInsurance('')
+    setHouseInsurance('')
     setMonthlyPayment(null)
     setAmortizationSchedule([])
   }
@@ -149,6 +161,53 @@ function App() {
             </div>
           </div>
 
+          {/* Insurance Section */}
+          <div className="section">
+            <h2 
+              className="section-title collapsible" 
+              onClick={() => setIsInsuranceExpanded(!isInsuranceExpanded)}
+            >
+              🛡️ Insurance (Optional)
+              <span className="collapse-icon">{isInsuranceExpanded ? '▼' : '▶'}</span>
+            </h2>
+            
+            {isInsuranceExpanded && (
+              <div className="input-row">
+                <div className="input-group">
+                  <label htmlFor="lifeInsurance">
+                    <span className="label-text">Life Insurance</span>
+                    <span className="label-unit">€/month</span>
+                  </label>
+                  <input
+                    id="lifeInsurance"
+                    type="number"
+                    value={lifeInsurance}
+                    onChange={(e) => setLifeInsurance(e.target.value)}
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label htmlFor="houseInsurance">
+                    <span className="label-text">House Insurance</span>
+                    <span className="label-unit">€/month</span>
+                  </label>
+                  <input
+                    id="houseInsurance"
+                    type="number"
+                    value={houseInsurance}
+                    onChange={(e) => setHouseInsurance(e.target.value)}
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="button-group">
             <button className="calculate-btn" onClick={calculateMortgage}>
               Calculate Payment
@@ -172,6 +231,15 @@ function App() {
                   <span>Total Interest Rate:</span>
                   <span>{(parseFloat(euribor || 0) + parseFloat(spread || 0)).toFixed(2)}%</span>
                 </div>
+                {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
+                  <div className="detail-item">
+                    <span>Monthly Insurance:</span>
+                    <span>€{((parseFloat(lifeInsurance) || 0) + (parseFloat(houseInsurance) || 0)).toLocaleString('pt-PT', { 
+                      minimumFractionDigits: 2, 
+                      maximumFractionDigits: 2 
+                    })}</span>
+                  </div>
+                )}
                 <div className="detail-item">
                   <span>Total Amount Paid:</span>
                   <span>€{(monthlyPayment * parseInt(months || 0)).toLocaleString('pt-PT', { 
@@ -181,7 +249,7 @@ function App() {
                 </div>
                 <div className="detail-item">
                   <span>Total Interest:</span>
-                  <span>€{((monthlyPayment * parseInt(months || 0)) - parseFloat(loanAmount || 0)).toLocaleString('pt-PT', { 
+                  <span>€{((monthlyPayment * parseInt(months || 0)) - parseFloat(loanAmount || 0) - ((parseFloat(lifeInsurance) || 0) + (parseFloat(houseInsurance) || 0)) * parseInt(months || 0)).toLocaleString('pt-PT', { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
@@ -207,9 +275,12 @@ function App() {
                     <thead>
                       <tr>
                         <th>Month</th>
-                        <th>Payment</th>
                         <th>Principal</th>
                         <th>Interest</th>
+                        {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
+                          <th>Insurance</th>
+                        )}
+                        <th>Total Payment</th>
                         <th>Balance</th>
                       </tr>
                     </thead>
@@ -217,15 +288,21 @@ function App() {
                       {amortizationSchedule.map((row) => (
                         <tr key={row.month}>
                           <td>{row.month}</td>
-                          <td>€{row.payment.toLocaleString('pt-PT', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}</td>
                           <td>€{row.principal.toLocaleString('pt-PT', { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}</td>
                           <td>€{row.interest.toLocaleString('pt-PT', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}</td>
+                          {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
+                            <td>€{row.insurance.toLocaleString('pt-PT', { 
+                              minimumFractionDigits: 2, 
+                              maximumFractionDigits: 2 
+                            })}</td>
+                          )}
+                          <td>€{row.totalPayment.toLocaleString('pt-PT', { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}</td>
