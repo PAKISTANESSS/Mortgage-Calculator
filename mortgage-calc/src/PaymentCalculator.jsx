@@ -1,18 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './Calculator.css'
 
 function PaymentCalculator() {
-  const [loanAmount, setLoanAmount] = useState('')
-  const [months, setMonths] = useState('')
-  const [euribor, setEuribor] = useState('')
-  const [spread, setSpread] = useState('')
-  const [lifeInsurance, setLifeInsurance] = useState('')
-  const [houseInsurance, setHouseInsurance] = useState('')
+  // Load from localStorage or use empty string
+  const [loanAmount, setLoanAmount] = useState(() => localStorage.getItem('loanAmount') || '')
+  const [months, setMonths] = useState(() => localStorage.getItem('months') || '')
+  const [euribor, setEuribor] = useState(() => localStorage.getItem('euribor') || '')
+  const [spread, setSpread] = useState(() => localStorage.getItem('spread') || '')
+  const [lifeInsurance, setLifeInsurance] = useState(() => localStorage.getItem('lifeInsurance') || '')
+  const [houseInsurance, setHouseInsurance] = useState(() => localStorage.getItem('houseInsurance') || '')
   const [monthlyPayment, setMonthlyPayment] = useState(null)
   const [amortizationSchedule, setAmortizationSchedule] = useState([])
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
   const [isInsuranceExpanded, setIsInsuranceExpanded] = useState(false)
   const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(true)
+
+  // Save to localStorage whenever values change
+  useEffect(() => {
+    localStorage.setItem('loanAmount', loanAmount)
+    localStorage.setItem('months', months)
+    localStorage.setItem('euribor', euribor)
+    localStorage.setItem('spread', spread)
+    localStorage.setItem('lifeInsurance', lifeInsurance)
+    localStorage.setItem('houseInsurance', houseInsurance)
+  }, [loanAmount, months, euribor, spread, lifeInsurance, houseInsurance])
 
   const calculateMortgage = () => {
     const principal = parseFloat(loanAmount)

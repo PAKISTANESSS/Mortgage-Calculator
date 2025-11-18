@@ -533,6 +533,89 @@ button {
   }
 }
 
+/* Amortization Rules */
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #f7fafc;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.rule-inputs {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.rule-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rule-input-group label {
+  font-size: 1rem;
+  color: #4a5568;
+  font-weight: 600;
+}
+
+.rule-input-group input,
+.rule-input-group select {
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.rule-input-group input:focus,
+.rule-input-group select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.remove-rule-btn {
+  background: #fee;
+  color: #c53030;
+  border: 1px solid #fc8181;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.remove-rule-btn:hover {
+  background: #fc8181;
+  color: white;
+}
+
+.add-rule-btn {
+  padding: 0.75rem 1.5rem;
+  background: #f7fafc;
+  color: #667eea;
+  border: 2px dashed #667eea;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.add-rule-btn:hover {
+  background: #edf2f7;
+  border-style: solid;
+}
+
 /* Smooth number input appearance */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
