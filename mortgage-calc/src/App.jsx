@@ -46,23 +46,78 @@ function App() {
 
     setMonthlyPayment(payment + totalInsurance)
 
-    // Generate amortization schedule
+    // Generate amortization schedule with yearly summaries
     const schedule = []
     let remainingBalance = principal
+    let yearlyPrincipal = 0
+    let yearlyInterest = 0
+    let yearlyInsurance = 0
+    let yearlyTotal = 0
 
     for (let i = 1; i <= numberOfMonths; i++) {
       const interestPayment = remainingBalance * monthlyRate
       const principalPayment = payment - interestPayment
       remainingBalance -= principalPayment
 
-      schedule.push({
-        month: i,
+      // Calculate month within the year (1-12)
+      const monthInYear = ((i - 1) % 12) + 1
+      const yearNumber = Math.floor((i - 1) / 12) + 1
+
+      const monthData = {
+        month: monthInYear,
+        year: yearNumber,
+        absoluteMonth: i,
         payment: payment,
         principal: principalPayment,
         interest: interestPayment,
         insurance: totalInsurance,
         totalPayment: payment + totalInsurance,
-        balance: Math.max(0, remainingBalance) // Avoid negative balance due to rounding
+        balance: Math.max(0, remainingBalance),
+        isYearlySummary: false
+      }
+
+      schedule.push(monthData)
+
+      // Accumulate yearly totals
+      yearlyPrincipal += principalPayment
+      yearlyInterest += interestPayment
+      yearlyInsurance += totalInsurance
+      yearlyTotal += payment + totalInsurance
+
+      // Add yearly summary row after every 12 months
+      if (i % 12 === 0) {
+        const yearNum = i / 12
+        schedule.push({
+          month: 'Total',
+          year: yearNum,
+          principal: yearlyPrincipal,
+          interest: yearlyInterest,
+          insurance: yearlyInsurance,
+          totalPayment: yearlyTotal,
+          balance: Math.max(0, remainingBalance),
+          isYearlySummary: true
+        })
+
+        // Reset yearly accumulators
+        yearlyPrincipal = 0
+        yearlyInterest = 0
+        yearlyInsurance = 0
+        yearlyTotal = 0
+      }
+    }
+
+    // Add final year summary if there are remaining months (not a full year)
+    if (numberOfMonths % 12 !== 0 && yearlyTotal > 0) {
+      const finalYear = Math.floor(numberOfMonths / 12) + 1
+      schedule.push({
+        month: 'Total',
+        year: finalYear,
+        principal: yearlyPrincipal,
+        interest: yearlyInterest,
+        insurance: yearlyInsurance,
+        totalPayment: yearlyTotal,
+        balance: Math.max(0, remainingBalance),
+        isYearlySummary: true
       })
     }
 
@@ -274,6 +329,7 @@ function App() {
                   <table className="amortization-table">
                     <thead>
                       <tr>
+                        <th>Year</th>
                         <th>Month</th>
                         <th>Principal</th>
                         <th>Interest</th>
@@ -285,8 +341,9 @@ function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {amortizationSchedule.map((row) => (
-                        <tr key={row.month}>
+                      {amortizationSchedule.map((row, index) => (
+                        <tr key={`${row.month}-${index}`} className={row.isYearlySummary ? 'yearly-summary' : ''}>
+                          <td>{row.year}</td>
                           <td>{row.month}</td>
                           <td>€{row.principal.toLocaleString('pt-PT', { 
                             minimumFractionDigits: 2, 
