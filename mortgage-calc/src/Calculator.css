@@ -557,6 +557,14 @@ button {
     width: 100%;
     padding: 0.5rem;
   }
+
+  .line-chart {
+    padding: 1rem;
+  }
+
+  .line-chart-svg text {
+    font-size: 10px;
+  }
 }
 
 /* Amortization Rules */
@@ -649,5 +657,23 @@ button {
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   opacity: 1;
+}
+
+/* Line Chart */
+.chart-comparison {
+  margin-top: 1rem;
+}
+
+.line-chart {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.line-chart-svg {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
 }
 
