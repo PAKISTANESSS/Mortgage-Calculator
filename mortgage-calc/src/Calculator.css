@@ -559,11 +559,17 @@ button {
   }
 
   .line-chart {
-    padding: 1rem;
+    padding: 0.5rem;
+    overflow-x: auto;
   }
 
-  .line-chart-svg text {
-    font-size: 10px;
+  .line-chart-svg {
+    min-width: 600px;
+    max-height: 300px;
+  }
+
+  .chart-comparison p {
+    font-size: 0.85rem;
   }
 }
 
