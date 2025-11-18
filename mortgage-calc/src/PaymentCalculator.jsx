@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import './App.css'
+import './Calculator.css'
 
-function App() {
+function PaymentCalculator() {
   const [loanAmount, setLoanAmount] = useState('')
   const [months, setMonths] = useState('')
   const [euribor, setEuribor] = useState('')
@@ -489,4 +489,5 @@ function App() {
   )
 }
 
-export default App
+export default PaymentCalculator
+
