@@ -140,7 +140,7 @@ function PaymentCalculator() {
     <div className="app">
       <div className="container">
         <header>
-          <h1>🏠 Mortgage Calculator</h1>
+          <h1>🏠 Monthly Payment Calculator</h1>
           <p className="subtitle">Calculate your monthly mortgage payment</p>
         </header>
 

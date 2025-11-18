@@ -17,7 +17,7 @@ function Navigation() {
               to="/" 
               className={location.pathname === '/' ? 'nav-link active' : 'nav-link'}
             >
-              Payment Calculator
+              Monthly Payment Calculator
             </Link>
           </li>
           <li>
