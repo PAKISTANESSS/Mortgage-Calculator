@@ -33,6 +33,7 @@ export const translations = {
     exporting: 'Generating PDF...',
     exportSubtitle: 'This may take a moment for large reports',
     validationError: 'Please fill in all fields with valid numbers',
+    pdfFilename: 'amortization-plan',
     
     // Basic Info
     basicInfo: 'Basic Information',
@@ -126,6 +127,7 @@ export const translations = {
     exporting: 'A gerar PDF...',
     exportSubtitle: 'Isto pode demorar um momento para relatórios grandes',
     validationError: 'Por favor, preencha todos os campos com números válidos',
+    pdfFilename: 'plano-amortizacao',
     
     // Basic Info
     basicInfo: 'Informação Básica',
@@ -219,6 +221,7 @@ export const translations = {
     exporting: 'Génération du PDF...',
     exportSubtitle: 'Cela peut prendre un moment pour les grands rapports',
     validationError: 'Veuillez remplir tous les champs avec des nombres valides',
+    pdfFilename: 'plan-amortissement',
     
     // Basic Info
     basicInfo: 'Informations de Base',
@@ -312,6 +315,7 @@ export const translations = {
     exporting: 'PDF wird erstellt...',
     exportSubtitle: 'Dies kann bei großen Berichten einen Moment dauern',
     validationError: 'Bitte füllen Sie alle Felder mit gültigen Zahlen aus',
+    pdfFilename: 'tilgungsplan',
     
     // Basic Info
     basicInfo: 'Grundinformationen',
@@ -405,6 +409,7 @@ export const translations = {
     exporting: 'Generando PDF...',
     exportSubtitle: 'Esto puede tardar un momento para informes grandes',
     validationError: 'Por favor, complete todos los campos con números válidos',
+    pdfFilename: 'plan-amortizacion',
     
     // Basic Info
     basicInfo: 'Información Básica',

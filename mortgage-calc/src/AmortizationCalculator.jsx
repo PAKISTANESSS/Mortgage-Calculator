@@ -109,7 +109,8 @@ function AmortizationCalculator() {
       setIsChartExpanded,
       setIsScheduleExpanded,
       setIsInsuranceExpanded,
-      setIsExporting
+      setIsExporting,
+      t
     })
   }
 
@@ -271,7 +272,7 @@ function AmortizationCalculator() {
           )}
 
           {amortizationSchedule.length > 0 && scheduleWithoutExtra.length > 0 && (
-            <div className="section amortization-section">
+            <div className="section amortization-section" data-section="balance-comparison">
               <h2 
                 className="section-title collapsible" 
                 onClick={() => setIsChartExpanded(!isChartExpanded)}
@@ -307,7 +308,7 @@ function AmortizationCalculator() {
           )}
 
           {amortizationSchedule.length > 0 && (
-            <div className="section amortization-section">
+            <div className="section amortization-section" data-section="amortization-schedule">
               <h2 
                 className="section-title collapsible" 
                 onClick={() => setIsScheduleExpanded(!isScheduleExpanded)}
@@ -416,8 +417,8 @@ function AmortizationCalculator() {
         <div className="export-loading-overlay">
           <div className="export-loading-content">
             <div className="export-spinner"></div>
-            <p>Generating PDF...</p>
-            <p className="export-loading-subtitle">This may take a moment for large reports</p>
+            <p>{t.exporting}</p>
+            <p className="export-loading-subtitle">{t.exportSubtitle}</p>
           </div>
         </div>
       )}

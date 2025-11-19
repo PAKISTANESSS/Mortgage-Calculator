@@ -201,7 +201,8 @@ export async function exportReportToPDF({
   setIsChartExpanded,
   setIsScheduleExpanded,
   setIsInsuranceExpanded,
-  setIsExporting
+  setIsExporting,
+  t
 }) {
   if (!exportRef.current) return
 
@@ -246,12 +247,29 @@ export async function exportReportToPDF({
     if (buttonGroup) buttonGroup.style.display = 'none'
     if (exportButtonParent) exportButtonParent.style.display = 'none'
 
+    // Make result-card background match table header exactly
+    const resultCard = element.querySelector('.result-card')
+    const resultCardOriginalStyle = resultCard ? resultCard.style.cssText : null
+    if (resultCard) {
+      // Use the secondary color (darker, richer) to match the visual appearance of the gradient table header
+      const themeSecondaryColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--theme-secondary').trim() || '#2f855a'
+      
+      // Force solid background with no transparency or gradients
+      resultCard.style.setProperty('background', themeSecondaryColor, 'important')
+      resultCard.style.setProperty('background-image', 'none', 'important')
+      resultCard.style.setProperty('opacity', '1', 'important')
+      resultCard.style.setProperty('filter', 'none', 'important')
+      
+      // Ensure text remains white and visible
+      resultCard.style.setProperty('color', 'white', 'important')
+    }
+
     const pdf = new jsPDF('p', 'mm', 'a4')
     
-    // Find the chart and schedule sections to split before them
-    const allSections = Array.from(element.querySelectorAll('.section'))
-    const chartSection = allSections.find(s => s.textContent.includes('Balance Comparison'))
-    const scheduleSection = allSections.find(s => s.textContent.includes('Amortization Schedule'))
+    // Find the chart and schedule sections using data attributes (language-independent)
+    const chartSection = element.querySelector('[data-section="balance-comparison"]')
+    const scheduleSection = element.querySelector('[data-section="amortization-schedule"]')
     
     // Temporarily hide chart and schedule sections
     const chartDisplay = chartSection ? chartSection.style.display : null
@@ -301,6 +319,13 @@ export async function exportReportToPDF({
     // Remove SVG elements and restore pie charts
     restorePieCharts(svgElements, pieOriginalStyles)
 
+    // Restore result-card styling
+    if (resultCard && resultCardOriginalStyle !== null) {
+      resultCard.style.cssText = resultCardOriginalStyle
+    } else if (resultCard) {
+      resultCard.style.cssText = ''
+    }
+
     // Restore button displays
     if (buttonGroup && buttonGroupDisplay !== null) buttonGroup.style.display = buttonGroupDisplay
     if (buttonGroup && buttonGroupDisplay === null) buttonGroup.style.display = ''
@@ -315,7 +340,8 @@ export async function exportReportToPDF({
     // Generate filename with date (format: YYYY-MM-DD)
     const today = new Date()
     const dateString = today.toISOString().split('T')[0]
-    const filename = `amortization-plan-${dateString}.pdf`
+    const filePrefix = t?.pdfFilename || 'amortization-plan'
+    const filename = `${filePrefix}-${dateString}.pdf`
     
     pdf.save(filename)
     setIsExporting(false)
@@ -329,9 +355,11 @@ export async function exportReportToPDF({
       const buttonGroup = element.querySelector('.button-group')
       const exportButton = element.querySelector('.export-btn-inline')
       const exportButtonParent = exportButton ? exportButton.parentElement : null
+      const resultCard = element.querySelector('.result-card')
       
       if (buttonGroup) buttonGroup.style.display = ''
       if (exportButtonParent) exportButtonParent.style.display = ''
+      if (resultCard) resultCard.style.cssText = ''
     }
     
     setIsExporting(false)
