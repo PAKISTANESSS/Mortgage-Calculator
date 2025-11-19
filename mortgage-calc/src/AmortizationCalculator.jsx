@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import './Calculator.css'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { calculateAmortizationSchedule, calculateScheduleWithoutExtra } from './utils/calculations'
@@ -31,6 +31,20 @@ function AmortizationCalculator() {
   const [isExporting, setIsExporting] = useState(false)
 
   const exportRef = useRef()
+
+  // Disable scrolling when exporting
+  useEffect(() => {
+    if (isExporting) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isExporting])
 
   const calculateAmortization = () => {
     const principal = parseFloat(loanAmount)

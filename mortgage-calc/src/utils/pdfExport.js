@@ -235,6 +235,17 @@ export async function exportReportToPDF({
     // Replace CSS pie charts with SVG for PDF export
     const { svgElements, pieOriginalStyles } = replacePieChartsWithSVG(element)
 
+    // Hide buttons during export
+    const buttonGroup = element.querySelector('.button-group')
+    const exportButton = element.querySelector('.export-btn-inline')
+    const exportButtonParent = exportButton ? exportButton.parentElement : null
+    
+    const buttonGroupDisplay = buttonGroup ? buttonGroup.style.display : null
+    const exportButtonParentDisplay = exportButtonParent ? exportButtonParent.style.display : null
+    
+    if (buttonGroup) buttonGroup.style.display = 'none'
+    if (exportButtonParent) exportButtonParent.style.display = 'none'
+
     const pdf = new jsPDF('p', 'mm', 'a4')
     
     // Find the chart and schedule sections to split before them
@@ -290,6 +301,12 @@ export async function exportReportToPDF({
     // Remove SVG elements and restore pie charts
     restorePieCharts(svgElements, pieOriginalStyles)
 
+    // Restore button displays
+    if (buttonGroup && buttonGroupDisplay !== null) buttonGroup.style.display = buttonGroupDisplay
+    if (buttonGroup && buttonGroupDisplay === null) buttonGroup.style.display = ''
+    if (exportButtonParent && exportButtonParentDisplay !== null) exportButtonParent.style.display = exportButtonParentDisplay
+    if (exportButtonParent && exportButtonParentDisplay === null) exportButtonParent.style.display = ''
+
     // Restore original states
     setIsChartExpanded(wasChartExpanded)
     setIsScheduleExpanded(wasScheduleExpanded)
@@ -305,6 +322,18 @@ export async function exportReportToPDF({
   } catch (error) {
     console.error('Error generating PDF:', error)
     alert('Error generating PDF. Please try again.')
+    
+    // Restore button displays even on error
+    const element = exportRef.current
+    if (element) {
+      const buttonGroup = element.querySelector('.button-group')
+      const exportButton = element.querySelector('.export-btn-inline')
+      const exportButtonParent = exportButton ? exportButton.parentElement : null
+      
+      if (buttonGroup) buttonGroup.style.display = ''
+      if (exportButtonParent) exportButtonParent.style.display = ''
+    }
+    
     setIsExporting(false)
   }
 }
