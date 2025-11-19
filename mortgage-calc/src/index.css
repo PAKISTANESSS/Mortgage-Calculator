@@ -11,6 +11,12 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Theme variables - defaults (will be overridden by theme hook) */
+  --theme-primary: #667eea;
+  --theme-secondary: #764ba2;
+  --theme-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --theme-background: linear-gradient(to bottom right, #f7fafc 0%, #edf2f7 100%);
 }
 
 body {
@@ -18,7 +24,7 @@ body {
   padding: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--theme-gradient);
 }
 
 #root {

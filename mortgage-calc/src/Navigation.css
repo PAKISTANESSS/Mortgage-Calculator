@@ -23,7 +23,7 @@
   gap: 0.75rem;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #667eea;
+  color: var(--theme-primary);
 }
 
 .nav-icon {
@@ -31,7 +31,7 @@
 }
 
 .nav-title {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--theme-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -56,14 +56,110 @@
 }
 
 .nav-link:hover {
-  color: #667eea;
+  color: var(--theme-primary);
   background: rgba(102, 126, 234, 0.1);
 }
 
 .nav-link.active {
   color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--theme-gradient);
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.theme-selector {
+  position: relative;
+}
+
+.theme-button {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.theme-button:hover {
+  border-color: var(--theme-primary, #667eea);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.theme-button:active {
+  transform: scale(0.98);
+}
+
+.theme-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem;
+  min-width: 200px;
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.theme-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.theme-option:hover {
+  background: #f7fafc;
+}
+
+.theme-option.active {
+  background: #e6f2ff;
+}
+
+.theme-color-preview {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.theme-name {
+  flex: 1;
+  color: #4a5568;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.theme-check {
+  color: var(--theme-primary, #667eea);
+  font-weight: bold;
+  font-size: 1.1rem;
 }
 
 @media (max-width: 640px) {
@@ -82,6 +178,17 @@
   .nav-link {
     font-size: 0.9rem;
     padding: 0.5rem 0.75rem;
+  }
+
+  .theme-selector {
+    position: static;
+  }
+
+  .theme-menu {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    min-width: 180px;
   }
 }
 

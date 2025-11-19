@@ -14,7 +14,7 @@ body {
 
 .app {
   min-height: calc(100vh - 80px);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--theme-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,7 +46,7 @@ header h1 {
 }
 
 .export-btn-inline {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--theme-gradient);
   color: white;
   border: none;
   padding: 0.8rem 1.8rem;
@@ -101,7 +101,7 @@ header h1 {
 
 .collapse-icon {
   font-size: 0.9rem;
-  color: #667eea;
+  color: var(--theme-primary);
   transition: transform 0.3s ease;
 }
 
@@ -165,7 +165,7 @@ header h1 {
 
 .input-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--theme-primary);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -206,7 +206,7 @@ button {
 }
 
 .calculate-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--theme-gradient);
   color: white;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
@@ -234,7 +234,7 @@ button {
 .result-card {
   margin-top: 2rem;
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--theme-gradient);
   border-radius: 15px;
   color: white;
   animation: slideIn 0.4s ease;
@@ -405,7 +405,7 @@ button {
 .amortization-table thead {
   position: sticky;
   top: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--theme-gradient);
   color: white;
   z-index: 10;
 }
@@ -437,8 +437,8 @@ button {
 .amortization-table tbody tr.yearly-summary {
   background: linear-gradient(135deg, #e8f4f8 0%, #d4e8f0 100%);
   font-weight: 700;
-  border-top: 2px solid #667eea;
-  border-bottom: 2px solid #667eea;
+  border-top: 2px solid var(--theme-primary);
+  border-bottom: 2px solid var(--theme-primary);
 }
 
 .amortization-table tbody tr.yearly-summary td {
@@ -448,13 +448,13 @@ button {
 }
 
 .amortization-table tbody tr.yearly-summary td:first-child {
-  color: #667eea;
+  color: var(--theme-primary);
   font-weight: 700;
   font-size: 1rem;
 }
 
 .amortization-table tbody tr.yearly-summary td:nth-child(2) {
-  color: #667eea;
+  color: var(--theme-primary);
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.85rem;
@@ -472,7 +472,7 @@ button {
 
 .amortization-table tbody tr:not(.yearly-summary) td:first-child {
   font-weight: 600;
-  color: #667eea;
+  color: var(--theme-primary);
   background-color: #f7fafc;
 }
 
@@ -484,7 +484,7 @@ button {
 /* Table Total Row */
 .amortization-table tfoot {
   background: #f7fafc;
-  border-top: 3px solid #667eea;
+  border-top: 3px solid var(--theme-primary);
 }
 
 .amortization-table .table-total td {
@@ -492,7 +492,7 @@ button {
   color: #2d3748;
   font-weight: 700;
   font-size: 1rem;
-  border-top: 3px solid #667eea;
+  border-top: 3px solid var(--theme-primary);
 }
 
 /* Responsive Design */
@@ -670,7 +670,7 @@ button {
 .rule-input-group input:focus,
 .rule-input-group select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--theme-primary);
 }
 
 .remove-rule-btn {
@@ -694,8 +694,8 @@ button {
 .add-rule-btn {
   padding: 0.75rem 1.5rem;
   background: #f7fafc;
-  color: #667eea;
-  border: 2px dashed #667eea;
+  color: var(--theme-primary);
+  border: 2px dashed var(--theme-primary);
   border-radius: 10px;
   cursor: pointer;
   font-size: 0.95rem;
@@ -877,7 +877,7 @@ input[type="number"]::-webkit-outer-spin-button {
   height: 50px;
   margin: 0 auto 1.5rem;
   border: 4px solid #e2e8f0;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid var(--theme-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
