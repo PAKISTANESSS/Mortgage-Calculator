@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './Calculator.css'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
 function AmortizationCalculator() {
   // Load from localStorage or use empty string
@@ -14,6 +16,7 @@ function AmortizationCalculator() {
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
   const [isInsuranceExpanded, setIsInsuranceExpanded] = useState(false)
   const [isChartExpanded, setIsChartExpanded] = useState(true)
+  const [isExporting, setIsExporting] = useState(false)
   const [amortizationRules, setAmortizationRules] = useState(() => {
     const saved = localStorage.getItem('amortizationRules')
     return saved ? JSON.parse(saved) : [{ type: 'recurring', frequency: '1', period: 'year', amount: '1000', month: '', year: '' }]
@@ -230,6 +233,95 @@ function AmortizationCalculator() {
     ? amortizationSchedule[0].totalPayment
     : 0
 
+  const exportRef = useRef()
+
+  const exportToPDF = async () => {
+    if (!exportRef.current) return
+
+    try {
+      setIsExporting(true)
+      
+      // Save current states
+      const wasChartExpanded = isChartExpanded
+      const wasScheduleExpanded = isScheduleExpanded
+
+      // Temporarily expand all sections for export
+      setIsChartExpanded(true)
+      setIsScheduleExpanded(true)
+
+      // Wait for state updates to render
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const element = exportRef.current
+      
+      // Remove any max-height restrictions temporarily
+      const tables = element.querySelectorAll('.amortization-table-wrapper')
+      const originalStyles = []
+      tables.forEach(table => {
+        originalStyles.push(table.style.cssText)
+        table.style.maxHeight = 'none'
+        table.style.overflow = 'visible'
+      })
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowHeight: element.scrollHeight
+      })
+
+      // Restore original styles
+      tables.forEach((table, index) => {
+        table.style.cssText = originalStyles[index]
+      })
+
+      // Restore original states
+      setIsChartExpanded(wasChartExpanded)
+      setIsScheduleExpanded(wasScheduleExpanded)
+
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+      
+      // Calculate dimensions to fit width
+      const ratio = pdfWidth / imgWidth
+      const scaledHeight = imgHeight * ratio
+      
+      // If content fits on one page
+      if (scaledHeight <= pdfHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, scaledHeight)
+      } else {
+        // Split content across multiple pages
+        let heightLeft = scaledHeight
+        let position = 0
+        
+        // Add first page
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, scaledHeight)
+        heightLeft -= pdfHeight
+        
+        // Add additional pages
+        while (heightLeft > 0) {
+          position = heightLeft - scaledHeight
+          pdf.addPage()
+          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, scaledHeight)
+          heightLeft -= pdfHeight
+        }
+      }
+      
+      pdf.save('amortization-report.pdf')
+      setIsExporting(false)
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      alert('Error generating PDF. Please try again.')
+      setIsExporting(false)
+    }
+  }
+
   return (
     <div className="app">
       <div className="container">
@@ -238,7 +330,7 @@ function AmortizationCalculator() {
           <p className="subtitle">View detailed loan amortization schedule</p>
         </header>
 
-        <div className="calculator-card">
+        <div className="calculator-card" ref={exportRef}>
           {/* Amortization Rules Section */}
           <div className="section">
             <h2 className="section-title">📝 Amortization Rules</h2>
@@ -501,10 +593,14 @@ function AmortizationCalculator() {
                 )}
                 <div className="detail-item">
                   <span>Total Amount Paid:</span>
-                  <span>€{(monthlyPayment * parseInt(months || 0)).toLocaleString('pt-PT', { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
-                  })}</span>
+                  <span>€{(() => {
+                    const dataPoints = amortizationSchedule.filter(row => !row.isYearlySummary)
+                    const totalPaid = dataPoints.reduce((sum, row) => sum + row.totalPayment, 0)
+                    return totalPaid.toLocaleString('pt-PT', { 
+                      minimumFractionDigits: 2, 
+                      maximumFractionDigits: 2 
+                    })
+                  })()}</span>
                 </div>
                 <div className="detail-item">
                   <span>Total Interest:</span>
@@ -514,6 +610,14 @@ function AmortizationCalculator() {
                   })}</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {amortizationSchedule.length > 0 && (
+            <div style={{ textAlign: 'center', margin: '3rem 0 2.5rem 0' }}>
+              <button className="export-btn-inline" onClick={exportToPDF} title="Export to PDF">
+                📄 Export to PDF
+              </button>
             </div>
           )}
 
@@ -937,6 +1041,17 @@ function AmortizationCalculator() {
           )}
         </div>
       </div>
+
+      {/* Loading Overlay */}
+      {isExporting && (
+        <div className="export-loading-overlay">
+          <div className="export-loading-content">
+            <div className="export-spinner"></div>
+            <p>Generating PDF...</p>
+            <p className="export-loading-subtitle">This may take a moment for large reports</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
