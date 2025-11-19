@@ -463,6 +463,20 @@ button {
   color: #2d3748;
 }
 
+/* Table Total Row */
+.amortization-table tfoot {
+  background: #f7fafc;
+  border-top: 3px solid #667eea;
+}
+
+.amortization-table .table-total td {
+  padding: 1rem 0.75rem;
+  color: #2d3748;
+  font-weight: 700;
+  font-size: 1rem;
+  border-top: 3px solid #667eea;
+}
+
 /* Responsive Design */
 @media (max-width: 640px) {
   header h1 {
@@ -570,6 +584,25 @@ button {
 
   .chart-comparison p {
     font-size: 0.85rem;
+  }
+
+  .pies-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .pie-chart-mini-inner {
+    width: 150px;
+    height: 150px;
+  }
+
+  .pie-chart-center-mini {
+    width: 90px;
+    height: 90px;
+  }
+
+  .pie-chart-amount-mini {
+    font-size: 0.95rem;
   }
 }
 
@@ -681,5 +714,98 @@ input[type="number"]::-webkit-outer-spin-button {
   width: 100%;
   height: auto;
   max-height: 400px;
+}
+
+/* Comparison Pie Charts */
+.comparison-pies {
+  margin-top: 2rem;
+}
+
+.pies-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.pie-comparison-item {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.pie-comparison-item h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.pie-chart-mini {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.pie-chart-mini-inner {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.pie-chart-center-mini {
+  width: 110px;
+  height: 110px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pie-chart-total-mini {
+  font-size: 0.8rem;
+  color: #718096;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.pie-chart-amount-mini {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.pie-legend-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.legend-item-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.legend-color-mini {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legend-text-mini {
+  color: #4a5568;
+  font-weight: 500;
 }
 
