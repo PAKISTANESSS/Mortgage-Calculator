@@ -21,6 +21,10 @@ function AmortizationCalculator() {
     const saved = localStorage.getItem('amortizationRules')
     return saved ? JSON.parse(saved) : [{ type: 'recurring', frequency: '1', period: 'year', amount: '1000', month: '', year: '' }]
   })
+  const [recalculatePayment, setRecalculatePayment] = useState(() => {
+    const saved = localStorage.getItem('recalculatePayment')
+    return saved ? JSON.parse(saved) : false
+  })
 
   // Save to localStorage whenever values change
   useEffect(() => {
@@ -36,6 +40,11 @@ function AmortizationCalculator() {
   useEffect(() => {
     localStorage.setItem('amortizationRules', JSON.stringify(amortizationRules))
   }, [amortizationRules])
+
+  // Save recalculate payment setting to localStorage
+  useEffect(() => {
+    localStorage.setItem('recalculatePayment', JSON.stringify(recalculatePayment))
+  }, [recalculatePayment])
 
   const addAmortizationRule = () => {
     setAmortizationRules([...amortizationRules, { type: 'recurring', frequency: '', period: 'month', amount: '', month: '', year: '' }])
@@ -87,12 +96,25 @@ function AmortizationCalculator() {
     let yearlyPrincipal = 0
     let yearlyInterest = 0
     let yearlyInsurance = 0
+    let yearlyBasePayment = 0
     let yearlyExtraAmortization = 0
     let yearlyTotal = 0
 
     for (let i = 1; i <= numberOfMonths; i++) {
+      // Recalculate payment if mode is enabled and there are extra payments
+      let currentPayment = payment
+      if (recalculatePayment && i > 1 && remainingBalance > 0) {
+        const remainingMonths = numberOfMonths - i + 1
+        if (monthlyRate === 0) {
+          currentPayment = remainingBalance / remainingMonths
+        } else {
+          const x = Math.pow(1 + monthlyRate, remainingMonths)
+          currentPayment = (remainingBalance * monthlyRate * x) / (x - 1)
+        }
+      }
+      
       const interestPayment = remainingBalance * monthlyRate
-      const principalPayment = payment - interestPayment
+      const principalPayment = currentPayment - interestPayment
       
       // Apply amortization rules
       let extraAmortization = 0
@@ -135,8 +157,9 @@ function AmortizationCalculator() {
         principal: principalPayment,
         interest: interestPayment,
         insurance: totalInsurance,
+        basePayment: currentPayment + totalInsurance,
         extraAmortization: extraAmortization,
-        totalPayment: payment + totalInsurance + extraAmortization,
+        totalPayment: currentPayment + totalInsurance + extraAmortization,
         balance: remainingBalance,
         isYearlySummary: false
       })
@@ -144,8 +167,9 @@ function AmortizationCalculator() {
       yearlyPrincipal += principalPayment
       yearlyInterest += interestPayment
       yearlyInsurance += totalInsurance
+      yearlyBasePayment += currentPayment + totalInsurance
       yearlyExtraAmortization += extraAmortization
-      yearlyTotal += payment + totalInsurance + extraAmortization
+      yearlyTotal += currentPayment + totalInsurance + extraAmortization
       
       // Stop if balance reaches 0
       if (remainingBalance === 0) {
@@ -159,6 +183,7 @@ function AmortizationCalculator() {
           principal: yearlyPrincipal,
           interest: yearlyInterest,
           insurance: yearlyInsurance,
+          basePayment: yearlyBasePayment,
           extraAmortization: yearlyExtraAmortization,
           totalPayment: yearlyTotal,
           balance: Math.max(0, remainingBalance),
@@ -167,6 +192,7 @@ function AmortizationCalculator() {
         yearlyPrincipal = 0
         yearlyInterest = 0
         yearlyInsurance = 0
+        yearlyBasePayment = 0
         yearlyExtraAmortization = 0
         yearlyTotal = 0
       }
@@ -181,6 +207,7 @@ function AmortizationCalculator() {
         principal: yearlyPrincipal,
         interest: yearlyInterest,
         insurance: yearlyInsurance,
+        basePayment: yearlyBasePayment,
         extraAmortization: yearlyExtraAmortization,
         totalPayment: yearlyTotal,
         balance: Math.max(0, remainingBalance),
@@ -221,6 +248,8 @@ function AmortizationCalculator() {
     setHouseInsurance('')
     setAmortizationSchedule([])
     setScheduleWithoutExtra([])
+    setAmortizationRules([{ type: 'recurring', frequency: '1', period: 'year', amount: '1000', month: '', year: '' }])
+    setRecalculatePayment(false)
   }
 
   const totalInterest = amortizationSchedule.length > 0
@@ -339,6 +368,47 @@ function AmortizationCalculator() {
               <p style={{ fontSize: '0.9rem', color: '#718096', marginBottom: '1rem' }}>
                 Add recurring (e.g., every year) or one-time (e.g., month 10 of year 4) extra payments to reduce your loan faster.
               </p>
+              
+              <div style={{ 
+                marginBottom: '1.5rem', 
+                padding: '1rem', 
+                background: '#f7fafc', 
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0'
+              }}>
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  fontWeight: '500',
+                  color: '#2d3748'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={recalculatePayment}
+                    onChange={(e) => setRecalculatePayment(e.target.checked)}
+                    style={{ 
+                      marginRight: '0.75rem',
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  Recalculate monthly payment after each extra payment
+                </label>
+                <p style={{ 
+                  fontSize: '0.85rem', 
+                  color: '#718096', 
+                  marginTop: '0.5rem',
+                  marginLeft: '26px',
+                  marginBottom: 0
+                }}>
+                  {recalculatePayment 
+                    ? '✓ Payment decreases each month as balance reduces (you pay less total interest)'
+                    : '✗ Payment stays fixed, loan finishes earlier (standard mortgage behavior)'}
+                </p>
+              </div>
               
               {amortizationRules.map((rule, index) => (
                 <div key={index} className="rule-row">
@@ -570,27 +640,104 @@ function AmortizationCalculator() {
 
           {amortizationSchedule.length > 0 && (
             <div className="result-card">
-              <div className="result-label">Monthly Payment</div>
-              <div className="result-amount">
-                €{monthlyPayment.toLocaleString('pt-PT', { 
-                  minimumFractionDigits: 2, 
-                  maximumFractionDigits: 2 
-                })}
-              </div>
+              <div className="result-label">Average Monthly Payments (with amortization)</div>
+              {(() => {
+                const dataPoints = amortizationSchedule.filter(row => !row.isYearlySummary)
+                const totalMonths = dataPoints.length
+                
+                // First year average (months 1-12)
+                const firstYearEnd = Math.min(12, totalMonths)
+                const firstYearPayments = dataPoints.slice(0, firstYearEnd)
+                const firstYearAvgBase = firstYearPayments.reduce((sum, row) => sum + row.basePayment, 0) / firstYearEnd
+                const firstYearAvgTotal = firstYearPayments.reduce((sum, row) => sum + row.totalPayment, 0) / firstYearEnd
+                
+                // 30% mark average (year around 30%)
+                const thirtyPercentMonth = Math.floor(totalMonths * 0.30)
+                const yearAt30Start = Math.max(0, thirtyPercentMonth - 6)
+                const yearAt30End = Math.min(totalMonths, thirtyPercentMonth + 6)
+                const yearAt30Payments = dataPoints.slice(yearAt30Start, yearAt30End)
+                const yearAt30AvgBase = yearAt30Payments.length > 0 
+                  ? yearAt30Payments.reduce((sum, row) => sum + row.basePayment, 0) / yearAt30Payments.length 
+                  : 0
+                const yearAt30AvgTotal = yearAt30Payments.length > 0 
+                  ? yearAt30Payments.reduce((sum, row) => sum + row.totalPayment, 0) / yearAt30Payments.length 
+                  : 0
+                
+                // 60% mark average (year around 60%)
+                const sixtyPercentMonth = Math.floor(totalMonths * 0.60)
+                const yearAt60Start = Math.max(0, sixtyPercentMonth - 6)
+                const yearAt60End = Math.min(totalMonths, sixtyPercentMonth + 6)
+                const yearAt60Payments = dataPoints.slice(yearAt60Start, yearAt60End)
+                const yearAt60AvgBase = yearAt60Payments.length > 0 
+                  ? yearAt60Payments.reduce((sum, row) => sum + row.basePayment, 0) / yearAt60Payments.length 
+                  : 0
+                const yearAt60AvgTotal = yearAt60Payments.length > 0 
+                  ? yearAt60Payments.reduce((sum, row) => sum + row.totalPayment, 0) / yearAt60Payments.length 
+                  : 0
+                
+                return (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>Year 1</div>
+                        <div className="result-amount" style={{ fontSize: '1.5rem' }}>
+                          €{firstYearAvgBase.toLocaleString('pt-PT', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}
+                          {firstYearAvgTotal !== firstYearAvgBase && (
+                            <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
+                              → (€{firstYearAvgTotal.toLocaleString('pt-PT', { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              })})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>Year {Math.ceil(totalMonths * 0.30 / 12)}</div>
+                        <div className="result-amount" style={{ fontSize: '1.5rem' }}>
+                          €{yearAt30AvgBase.toLocaleString('pt-PT', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}
+                          {yearAt30AvgTotal !== yearAt30AvgBase && (
+                            <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
+                              → (€{yearAt30AvgTotal.toLocaleString('pt-PT', { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              })})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>Year {Math.ceil(totalMonths * 0.60 / 12)}</div>
+                        <div className="result-amount" style={{ fontSize: '1.5rem' }}>
+                          €{yearAt60AvgBase.toLocaleString('pt-PT', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}
+                          {yearAt60AvgTotal !== yearAt60AvgBase && (
+                            <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
+                              → (€{yearAt60AvgTotal.toLocaleString('pt-PT', { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              })})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )
+              })()}
               <div className="result-details">
                 <div className="detail-item">
                   <span>Total Interest Rate:</span>
                   <span>{(parseFloat(euribor || 0) + parseFloat(spread || 0)).toFixed(2)}%</span>
                 </div>
-                {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
-                  <div className="detail-item">
-                    <span>Monthly Insurance:</span>
-                    <span>€{((parseFloat(lifeInsurance) || 0) + (parseFloat(houseInsurance) || 0)).toLocaleString('pt-PT', { 
-                      minimumFractionDigits: 2, 
-                      maximumFractionDigits: 2 
-                    })}</span>
-                  </div>
-                )}
                 <div className="detail-item">
                   <span>Total Amount Paid:</span>
                   <span>€{(() => {
@@ -934,10 +1081,11 @@ function AmortizationCalculator() {
                         {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
                           <th>Insurance</th>
                         )}
+                        <th>Monthly Payment</th>
                         {amortizationRules.length > 0 && (
                           <th>Extra Amort.</th>
                         )}
-                        <th>Total Payment</th>
+                        <th>Payment + Amort.</th>
                         <th>Balance</th>
                       </tr>
                     </thead>
@@ -960,6 +1108,10 @@ function AmortizationCalculator() {
                               maximumFractionDigits: 2 
                             })}</td>
                           )}
+                          <td>€{row.basePayment.toLocaleString('pt-PT', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}</td>
                           {amortizationRules.length > 0 && (
                             <td style={{ color: row.extraAmortization > 0 ? '#38a169' : '#4a5568', fontWeight: row.extraAmortization > 0 ? '600' : 'normal' }}>
                               €{row.extraAmortization.toLocaleString('pt-PT', { 
@@ -1011,6 +1163,15 @@ function AmortizationCalculator() {
                               })}
                           </td>
                         )}
+                        <td style={{ fontWeight: '700' }}>
+                          €{amortizationSchedule
+                            .filter(row => !row.isYearlySummary)
+                            .reduce((sum, row) => sum + row.basePayment, 0)
+                            .toLocaleString('pt-PT', { 
+                              minimumFractionDigits: 2, 
+                              maximumFractionDigits: 2 
+                            })}
+                        </td>
                         {amortizationRules.length > 0 && (
                           <td style={{ fontWeight: '700', color: '#38a169' }}>
                             €{amortizationSchedule
