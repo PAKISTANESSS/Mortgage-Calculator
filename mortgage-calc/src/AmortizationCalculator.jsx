@@ -273,13 +273,15 @@ function AmortizationCalculator() {
       // Save current states
       const wasChartExpanded = isChartExpanded
       const wasScheduleExpanded = isScheduleExpanded
+      const wasInsuranceExpanded = isInsuranceExpanded
 
       // Temporarily expand all sections for export
       setIsChartExpanded(true)
       setIsScheduleExpanded(true)
+      setIsInsuranceExpanded(true)
 
       // Wait for state updates to render
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await new Promise(resolve => setTimeout(resolve, 300))
 
       const element = exportRef.current
       
@@ -292,13 +294,130 @@ function AmortizationCalculator() {
         table.style.overflow = 'visible'
       })
 
-      const canvas = await html2canvas(element, {
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+      
+      // Find the chart and schedule sections to split before them
+      const allSections = Array.from(element.querySelectorAll('.section'))
+      const chartSection = allSections.find(s => s.textContent.includes('Balance Comparison'))
+      const scheduleSection = allSections.find(s => s.textContent.includes('Amortization Schedule'))
+      
+      // Temporarily hide chart and schedule sections
+      const chartDisplay = chartSection ? chartSection.style.display : null
+      const scheduleDisplay = scheduleSection ? scheduleSection.style.display : null
+      
+      if (chartSection) chartSection.style.display = 'none'
+      if (scheduleSection) scheduleSection.style.display = 'none'
+      
+      // Capture form sections (everything before charts)
+      const formCanvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
         windowHeight: element.scrollHeight
       })
+      
+      // Restore sections
+      if (chartSection && chartDisplay !== null) chartSection.style.display = chartDisplay
+      if (scheduleSection && scheduleDisplay !== null) scheduleSection.style.display = scheduleDisplay
+      
+      const formImgData = formCanvas.toDataURL('image/png')
+      const formImgWidth = formCanvas.width
+      const formImgHeight = formCanvas.height
+      const formRatio = pdfWidth / formImgWidth
+      const formScaledHeight = formImgHeight * formRatio
+      
+      // Add form sections
+      if (formScaledHeight <= pdfHeight) {
+        pdf.addImage(formImgData, 'PNG', 0, 0, pdfWidth, formScaledHeight)
+      } else {
+        let heightLeft = formScaledHeight
+        let position = 0
+        
+        pdf.addImage(formImgData, 'PNG', 0, position, pdfWidth, formScaledHeight)
+        heightLeft -= pdfHeight
+        
+        while (heightLeft > 0) {
+          position = heightLeft - formScaledHeight
+          pdf.addPage()
+          pdf.addImage(formImgData, 'PNG', 0, position, pdfWidth, formScaledHeight)
+          heightLeft -= pdfHeight
+        }
+      }
+      
+      // Add chart section on new page
+      if (chartSection) {
+        pdf.addPage()
+        
+        const chartCanvas = await html2canvas(chartSection, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          windowHeight: chartSection.scrollHeight
+        })
+        
+        const chartImgData = chartCanvas.toDataURL('image/png')
+        const chartImgWidth = chartCanvas.width
+        const chartImgHeight = chartCanvas.height
+        const chartRatio = pdfWidth / chartImgWidth
+        const chartScaledHeight = chartImgHeight * chartRatio
+        
+        if (chartScaledHeight <= pdfHeight) {
+          pdf.addImage(chartImgData, 'PNG', 0, 0, pdfWidth, chartScaledHeight)
+        } else {
+          let heightLeft = chartScaledHeight
+          let position = 0
+          
+          pdf.addImage(chartImgData, 'PNG', 0, position, pdfWidth, chartScaledHeight)
+          heightLeft -= pdfHeight
+          
+          while (heightLeft > 0) {
+            position = heightLeft - chartScaledHeight
+            pdf.addPage()
+            pdf.addImage(chartImgData, 'PNG', 0, position, pdfWidth, chartScaledHeight)
+            heightLeft -= pdfHeight
+          }
+        }
+      }
+      
+      // Add schedule section on new page
+      if (scheduleSection) {
+        pdf.addPage()
+        
+        const scheduleCanvas = await html2canvas(scheduleSection, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          windowHeight: scheduleSection.scrollHeight
+        })
+        
+        const scheduleImgData = scheduleCanvas.toDataURL('image/png')
+        const scheduleImgWidth = scheduleCanvas.width
+        const scheduleImgHeight = scheduleCanvas.height
+        const scheduleRatio = pdfWidth / scheduleImgWidth
+        const scheduleScaledHeight = scheduleImgHeight * scheduleRatio
+        
+        if (scheduleScaledHeight <= pdfHeight) {
+          pdf.addImage(scheduleImgData, 'PNG', 0, 0, pdfWidth, scheduleScaledHeight)
+        } else {
+          let heightLeft = scheduleScaledHeight
+          let position = 0
+          
+          pdf.addImage(scheduleImgData, 'PNG', 0, position, pdfWidth, scheduleScaledHeight)
+          heightLeft -= pdfHeight
+          
+          while (heightLeft > 0) {
+            position = heightLeft - scheduleScaledHeight
+            pdf.addPage()
+            pdf.addImage(scheduleImgData, 'PNG', 0, position, pdfWidth, scheduleScaledHeight)
+            heightLeft -= pdfHeight
+          }
+        }
+      }
 
       // Restore original styles
       tables.forEach((table, index) => {
@@ -308,39 +427,7 @@ function AmortizationCalculator() {
       // Restore original states
       setIsChartExpanded(wasChartExpanded)
       setIsScheduleExpanded(wasScheduleExpanded)
-
-      const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-      
-      // Calculate dimensions to fit width
-      const ratio = pdfWidth / imgWidth
-      const scaledHeight = imgHeight * ratio
-      
-      // If content fits on one page
-      if (scaledHeight <= pdfHeight) {
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, scaledHeight)
-      } else {
-        // Split content across multiple pages
-        let heightLeft = scaledHeight
-        let position = 0
-        
-        // Add first page
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, scaledHeight)
-        heightLeft -= pdfHeight
-        
-        // Add additional pages
-        while (heightLeft > 0) {
-          position = heightLeft - scaledHeight
-          pdf.addPage()
-          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, scaledHeight)
-          heightLeft -= pdfHeight
-        }
-      }
+      setIsInsuranceExpanded(wasInsuranceExpanded)
       
       pdf.save('amortization-report.pdf')
       setIsExporting(false)
