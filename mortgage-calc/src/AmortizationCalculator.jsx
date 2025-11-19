@@ -294,6 +294,37 @@ function AmortizationCalculator() {
         table.style.overflow = 'visible'
       })
 
+      // Make result card more readable for PDF
+      const resultCards = element.querySelectorAll('.result-card')
+      const cardOriginalStyles = []
+      resultCards.forEach(card => {
+        cardOriginalStyles.push(card.style.cssText)
+        card.style.background = '#ffffff'
+        card.style.color = '#2d3748'
+        card.style.border = '2px solid #667eea'
+      })
+      
+      const resultLabels = element.querySelectorAll('.result-label')
+      const labelOriginalStyles = []
+      resultLabels.forEach(label => {
+        labelOriginalStyles.push(label.style.cssText)
+        label.style.color = '#2d3748'
+      })
+      
+      const resultAmounts = element.querySelectorAll('.result-amount')
+      const amountOriginalStyles = []
+      resultAmounts.forEach(amount => {
+        amountOriginalStyles.push(amount.style.cssText)
+        amount.style.color = '#667eea'
+      })
+      
+      const resultDetails = element.querySelectorAll('.result-details, .detail-item')
+      const detailOriginalStyles = []
+      resultDetails.forEach(detail => {
+        detailOriginalStyles.push(detail.style.cssText)
+        detail.style.color = '#2d3748'
+      })
+
       const pdf = new jsPDF('p', 'mm', 'a4')
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = pdf.internal.pageSize.getHeight()
@@ -422,6 +453,22 @@ function AmortizationCalculator() {
       // Restore original styles
       tables.forEach((table, index) => {
         table.style.cssText = originalStyles[index]
+      })
+      
+      resultCards.forEach((card, index) => {
+        card.style.cssText = cardOriginalStyles[index]
+      })
+      
+      resultLabels.forEach((label, index) => {
+        label.style.cssText = labelOriginalStyles[index]
+      })
+      
+      resultAmounts.forEach((amount, index) => {
+        amount.style.cssText = amountOriginalStyles[index]
+      })
+      
+      resultDetails.forEach((detail, index) => {
+        detail.style.cssText = detailOriginalStyles[index]
       })
 
       // Restore original states
