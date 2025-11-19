@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import './Calculator.css'
 import { useLocalStorage } from './hooks/useLocalStorage'
+import { useLanguage } from './hooks/useLanguage'
 import { calculateMonthlyPayment } from './utils/calculations'
 import BasicInfoForm from './components/BasicInfoForm'
 import InsuranceForm from './components/InsuranceForm'
 
 function PaymentCalculator() {
+  const { t } = useLanguage()
   // Form state with localStorage persistence
   const [loanAmount, setLoanAmount] = useLocalStorage('loanAmount', '')
   const [months, setMonths] = useLocalStorage('months', '')
@@ -31,7 +33,7 @@ function PaymentCalculator() {
 
     // Validate inputs
     if (!principal || !numberOfMonths || isNaN(euriborRate) || isNaN(spreadRate)) {
-      alert('Please fill in all fields with valid numbers')
+      alert(t.validationError)
       return
     }
 
@@ -147,8 +149,8 @@ function PaymentCalculator() {
     <div className="app">
       <div className="container">
         <header>
-          <h1>🏠 Mortgage Calculator</h1>
-          <p className="subtitle">Calculate your monthly mortgage payments</p>
+          <h1>🏠 {t.navTitle}</h1>
+          <p className="subtitle">{t.monthlyPaymentCalc}</p>
         </header>
 
         <div className="calculator-card">
@@ -174,16 +176,16 @@ function PaymentCalculator() {
 
           <div className="button-group">
             <button className="calculate-btn" onClick={calculateMortgage}>
-              Calculate
+              {t.calculate}
             </button>
             <button className="reset-btn" onClick={resetCalculator}>
-              Reset
+              {t.reset}
             </button>
           </div>
 
           {monthlyPayment && (
             <div className="result-card">
-              <div className="result-label">Monthly Payment</div>
+              <div className="result-label">{t.monthlyPayment}</div>
               <div className="result-amount">
                 €{monthlyPayment.toLocaleString('pt-PT', { 
                   minimumFractionDigits: 2, 
@@ -192,29 +194,29 @@ function PaymentCalculator() {
               </div>
               <div className="result-details">
                 <div className="detail-item">
-                  <span>Loan Amount:</span>
+                  <span>{t.loanAmount}:</span>
                   <span>€{parseFloat(loanAmount).toLocaleString('pt-PT', { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
                 </div>
                 <div className="detail-item">
-                  <span>Loan Term:</span>
-                  <span>{months} months ({(parseInt(months) / 12).toFixed(1)} years)</span>
+                  <span>{t.loanTerm}:</span>
+                  <span>{months} {t.months} ({(parseInt(months) / 12).toFixed(1)} {t.years})</span>
                 </div>
                 <div className="detail-item">
-                  <span>Total Interest Rate:</span>
+                  <span>{t.totalInterestRate}:</span>
                   <span>{(parseFloat(euribor || 0) + parseFloat(spread || 0)).toFixed(2)}%</span>
                 </div>
                 <div className="detail-item">
-                  <span>Total Amount Paid:</span>
+                  <span>{t.totalAmountPaid}:</span>
                   <span>€{(monthlyPayment * parseInt(months)).toLocaleString('pt-PT', { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
                 </div>
                 <div className="detail-item">
-                  <span>Total Interest:</span>
+                  <span>{t.totalInterest}:</span>
                   <span>€{totalInterest.toLocaleString('pt-PT', { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
@@ -230,7 +232,7 @@ function PaymentCalculator() {
                 className="section-title collapsible" 
                 onClick={() => setIsBreakdownExpanded(!isBreakdownExpanded)}
               >
-                💰 Payment Breakdown
+                💰 {t.paymentBreakdown}
                 <span className="collapse-icon">{isBreakdownExpanded ? '▼' : '▶'}</span>
               </h2>
               
@@ -268,7 +270,7 @@ function PaymentCalculator() {
                         }}
                       >
                         <div className="pie-chart-center">
-                          <div className="pie-chart-total">Total</div>
+                          <div className="pie-chart-total">{t.total}</div>
                           <div className="pie-chart-amount">
                             €{grandTotal.toLocaleString('pt-PT', { 
                               minimumFractionDigits: 0, 
@@ -282,7 +284,7 @@ function PaymentCalculator() {
                         <div className="legend-item">
                           <div className="legend-color" style={{ background: '#667eea' }}></div>
                           <div className="legend-details">
-                            <div className="legend-label">Principal</div>
+                            <div className="legend-label">{t.principal}</div>
                             <div className="legend-value">€{principal.toLocaleString('pt-PT', { 
                               minimumFractionDigits: 0, 
                               maximumFractionDigits: 0 
@@ -294,7 +296,7 @@ function PaymentCalculator() {
                         <div className="legend-item">
                           <div className="legend-color" style={{ background: '#f093fb' }}></div>
                           <div className="legend-details">
-                            <div className="legend-label">Interest</div>
+                            <div className="legend-label">{t.interest}</div>
                             <div className="legend-value">€{totalInterest.toLocaleString('pt-PT', { 
                               minimumFractionDigits: 0, 
                               maximumFractionDigits: 0 
@@ -307,7 +309,7 @@ function PaymentCalculator() {
                           <div className="legend-item">
                             <div className="legend-color" style={{ background: '#4facfe' }}></div>
                             <div className="legend-details">
-                              <div className="legend-label">Insurance</div>
+                              <div className="legend-label">{t.insurance}</div>
                               <div className="legend-value">€{totalInsurance.toLocaleString('pt-PT', { 
                                 minimumFractionDigits: 0, 
                                 maximumFractionDigits: 0 
@@ -330,7 +332,7 @@ function PaymentCalculator() {
                 className="section-title collapsible" 
                 onClick={() => setIsScheduleExpanded(!isScheduleExpanded)}
               >
-                📋 Payment Schedule
+                📋 {t.paymentSchedule}
                 <span className="collapse-icon">{isScheduleExpanded ? '▼' : '▶'}</span>
               </h2>
 
@@ -339,15 +341,15 @@ function PaymentCalculator() {
                   <table className="amortization-table">
                     <thead>
                       <tr>
-                        <th>Year</th>
-                        <th>Month</th>
-                        <th>Principal</th>
-                        <th>Interest</th>
+                        <th>{t.yearColumn}</th>
+                        <th>{t.monthColumn}</th>
+                        <th>{t.principalColumn}</th>
+                        <th>{t.interestColumn}</th>
                         {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
-                          <th>Insurance</th>
+                          <th>{t.insuranceColumn}</th>
                         )}
-                        <th>Total Payment</th>
-                        <th>Balance</th>
+                        <th>{t.totalPaymentColumn}</th>
+                        <th>{t.balanceColumn}</th>
                       </tr>
                     </thead>
                     <tbody>

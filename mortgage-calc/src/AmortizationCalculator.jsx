@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import './Calculator.css'
 import { useLocalStorage } from './hooks/useLocalStorage'
+import { useLanguage } from './hooks/useLanguage'
 import { calculateAmortizationSchedule, calculateScheduleWithoutExtra } from './utils/calculations'
 import { exportReportToPDF } from './utils/pdfExport'
 import BasicInfoForm from './components/BasicInfoForm'
@@ -10,6 +11,7 @@ import BalanceComparisonChart from './components/BalanceComparisonChart'
 import ComparisonPieCharts from './components/ComparisonPieCharts'
 
 function AmortizationCalculator() {
+  const { t } = useLanguage()
   // Form state with localStorage persistence
   const [loanAmount, setLoanAmount] = useLocalStorage('loanAmount', '')
   const [months, setMonths] = useLocalStorage('months', '')
@@ -121,8 +123,8 @@ function AmortizationCalculator() {
     <div className="app">
       <div className="container">
         <header>
-          <h1>📊 Amortization Calculator</h1>
-          <p className="subtitle">View detailed loan amortization schedule</p>
+          <h1>{t.amortizationCalcTitle}</h1>
+          <p className="subtitle">{t.amortizationCalcSubtitle}</p>
         </header>
 
         <div className="calculator-card" ref={exportRef}>
@@ -155,16 +157,16 @@ function AmortizationCalculator() {
 
           <div className="button-group">
             <button className="calculate-btn" onClick={calculateAmortization}>
-              Calculate Amortization
+              {t.amortizationCalc}
             </button>
             <button className="reset-btn" onClick={resetCalculator}>
-              Reset
+              {t.reset}
             </button>
           </div>
 
           {amortizationSchedule.length > 0 && (
             <div className="result-card">
-              <div className="result-label">Average Monthly Payments (with amortization)</div>
+              <div className="result-label">{t.avgMonthlyPayments}</div>
               {(() => {
                 const dataPoints = amortizationSchedule.filter(row => !row.isYearlySummary)
                 const totalMonths = dataPoints.length
@@ -203,7 +205,7 @@ function AmortizationCalculator() {
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                       <div>
-                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>Year 1</div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} 1</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
                           €{firstYearAvgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           {firstYearAvgTotal !== firstYearAvgBase && (
@@ -214,7 +216,7 @@ function AmortizationCalculator() {
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>Year {Math.ceil(totalMonths * 0.30 / 12)}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} {Math.ceil(totalMonths * 0.30 / 12)}</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
                           €{yearAt30AvgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           {yearAt30AvgTotal !== yearAt30AvgBase && (
@@ -225,7 +227,7 @@ function AmortizationCalculator() {
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>Year {Math.ceil(totalMonths * 0.60 / 12)}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} {Math.ceil(totalMonths * 0.60 / 12)}</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
                           €{yearAt60AvgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           {yearAt60AvgTotal !== yearAt60AvgBase && (
@@ -241,11 +243,11 @@ function AmortizationCalculator() {
               })()}
               <div className="result-details">
                 <div className="detail-item">
-                  <span>Total Interest Rate:</span>
+                  <span>{t.totalInterestRate}:</span>
                   <span>{(parseFloat(euribor || 0) + parseFloat(spread || 0)).toFixed(2)}%</span>
                 </div>
                 <div className="detail-item">
-                  <span>Total Amount Paid:</span>
+                  <span>{t.totalAmountPaid}:</span>
                   <span>€{(() => {
                     const dataPoints = amortizationSchedule.filter(row => !row.isYearlySummary)
                     const totalPaid = dataPoints.reduce((sum, row) => sum + row.totalPayment, 0)
@@ -253,7 +255,7 @@ function AmortizationCalculator() {
                   })()}</span>
                 </div>
                 <div className="detail-item">
-                  <span>Total Interest:</span>
+                  <span>{t.totalInterest}:</span>
                   <span>€{totalInterest.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
@@ -262,8 +264,8 @@ function AmortizationCalculator() {
 
           {amortizationSchedule.length > 0 && (
             <div style={{ textAlign: 'center', margin: '3rem 0 2.5rem 0' }}>
-              <button className="export-btn-inline" onClick={handleExportToPDF} title="Export to PDF">
-                📄 Export to PDF
+              <button className="export-btn-inline" onClick={handleExportToPDF} title={t.exportPDF}>
+                📄 {t.exportPDF}
               </button>
             </div>
           )}
@@ -274,14 +276,14 @@ function AmortizationCalculator() {
                 className="section-title collapsible" 
                 onClick={() => setIsChartExpanded(!isChartExpanded)}
               >
-                📈 Balance Comparison
+                📈 {t.balanceComparison}
                 <span className="collapse-icon">{isChartExpanded ? '▼' : '▶'}</span>
               </h2>
 
               {isChartExpanded && (
                 <div className="chart-comparison">
                   <p style={{ fontSize: '0.9rem', color: '#718096', marginBottom: '1.5rem' }}>
-                    Compare how extra amortization payments reduce your loan balance over time.
+                    {t.balanceDesc}
                   </p>
                   
                   <BalanceComparisonChart
@@ -310,7 +312,7 @@ function AmortizationCalculator() {
                 className="section-title collapsible" 
                 onClick={() => setIsScheduleExpanded(!isScheduleExpanded)}
               >
-                📋 Amortization Schedule
+                📋 {t.amortizationSchedule}
                 <span className="collapse-icon">{isScheduleExpanded ? '▼' : '▶'}</span>
               </h2>
 
@@ -319,19 +321,19 @@ function AmortizationCalculator() {
                   <table className="amortization-table">
                     <thead>
                       <tr>
-                        <th>Year</th>
-                        <th>Month</th>
-                        <th>Principal</th>
-                        <th>Interest</th>
+                        <th>{t.yearColumn}</th>
+                        <th>{t.monthColumn}</th>
+                        <th>{t.principalColumn}</th>
+                        <th>{t.interestColumn}</th>
                         {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
-                          <th>Insurance</th>
+                          <th>{t.insuranceColumn}</th>
                         )}
-                        <th>Monthly Payment</th>
+                        <th>{t.monthlyPaymentColumn}</th>
                         {amortizationRules.length > 0 && (
-                          <th>Extra Amort.</th>
+                          <th>{t.extraAmortColumn}</th>
                         )}
-                        <th>Payment + Amort.</th>
-                        <th>Balance</th>
+                        <th>{t.paymentPlusAmortColumn}</th>
+                        <th>{t.balanceColumn}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -357,7 +359,7 @@ function AmortizationCalculator() {
                     </tbody>
                     <tfoot>
                       <tr className="table-total">
-                        <td colSpan="2" style={{ fontWeight: '700', textAlign: 'left' }}>TOTAL</td>
+                        <td colSpan="2" style={{ fontWeight: '700', textAlign: 'left' }}>{t.total}</td>
                         <td style={{ fontWeight: '700' }}>
                           €{amortizationSchedule
                             .filter(row => !row.isYearlySummary)

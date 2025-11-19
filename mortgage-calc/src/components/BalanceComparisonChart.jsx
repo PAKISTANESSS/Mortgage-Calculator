@@ -1,4 +1,8 @@
+import { useLanguage } from '../hooks/useLanguage'
+
 function BalanceComparisonChart({ loanAmount, scheduleWithoutExtra, amortizationSchedule }) {
+  const { t } = useLanguage()
+  
   return (
     <div className="line-chart">
       <svg viewBox="0 0 800 400" className="line-chart-svg">
@@ -105,10 +109,10 @@ function BalanceComparisonChart({ loanAmount, scheduleWithoutExtra, amortization
         
         {/* Legend */}
         <line x1="600" y1="30" x2="640" y2="30" stroke="#fc8181" strokeWidth="2" opacity="0.8" />
-        <text x="645" y="35" fontSize="14" fill="#4a5568">Without Extra Payments</text>
+        <text x="645" y="35" fontSize="14" fill="#4a5568">{t.withoutExtraPayments}</text>
         
         <line x1="600" y1="55" x2="640" y2="55" stroke="#667eea" strokeWidth="3" />
-        <text x="645" y="60" fontSize="14" fill="#4a5568">With Extra Payments</text>
+        <text x="645" y="60" fontSize="14" fill="#4a5568">{t.withExtraPayments}</text>
       </svg>
     </div>
   )

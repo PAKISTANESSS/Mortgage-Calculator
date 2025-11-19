@@ -1,9 +1,13 @@
+import { useLanguage } from '../hooks/useLanguage'
+
 function AmortizationRules({
   amortizationRules,
   setAmortizationRules,
   recalculatePayment,
   setRecalculatePayment
 }) {
+  const { t } = useLanguage()
+  
   const addRule = () => {
     setAmortizationRules([...amortizationRules, { type: 'recurring', frequency: '', period: 'month', amount: '', month: '', year: '' }])
   }
@@ -20,11 +24,11 @@ function AmortizationRules({
 
   return (
     <div className="section">
-      <h2 className="section-title">📝 Amortization Rules</h2>
+      <h2 className="section-title">📝 {t.amortizationRules}</h2>
       
       <div>
         <p style={{ fontSize: '0.9rem', color: '#718096', marginBottom: '1rem' }}>
-          Add recurring (e.g., every year) or one-time (e.g., month 10 of year 4) extra payments to reduce your loan faster.
+          {t.amortizationDesc}
         </p>
         
         <div style={{ 
@@ -53,7 +57,7 @@ function AmortizationRules({
                 cursor: 'pointer'
               }}
             />
-            Recalculate monthly payment after each extra payment
+            {t.recalculatePayment}
           </label>
           <p style={{ 
             fontSize: '0.85rem', 
@@ -62,9 +66,7 @@ function AmortizationRules({
             marginLeft: '26px',
             marginBottom: 0
           }}>
-            {recalculatePayment 
-              ? '✓ Payment decreases each month as balance reduces (you pay less total interest)'
-              : '✗ Payment stays fixed, loan finishes earlier (standard mortgage behavior)'}
+            {recalculatePayment ? t.recalculateYes : t.recalculateNo}
           </p>
         </div>
         
@@ -76,15 +78,15 @@ function AmortizationRules({
                   value={rule.type || 'recurring'}
                   onChange={(e) => updateRule(index, 'type', e.target.value)}
                 >
-                  <option value="recurring">Recurring</option>
-                  <option value="onetime">One-time</option>
+                  <option value="recurring">{t.recurring}</option>
+                  <option value="onetime">{t.oneTime}</option>
                 </select>
               </div>
               
               {rule.type === 'onetime' ? (
                 <>
                   <div className="rule-input-group">
-                    <label>Month</label>
+                    <label>{t.month}</label>
                     <input
                       type="number"
                       value={rule.month}
@@ -101,7 +103,7 @@ function AmortizationRules({
                   </div>
                   
                   <div className="rule-input-group">
-                    <label>Year</label>
+                    <label>{t.year}</label>
                     <input
                       type="number"
                       value={rule.year}
@@ -114,7 +116,7 @@ function AmortizationRules({
               ) : (
                 <>
                   <div className="rule-input-group">
-                    <label>Every</label>
+                    <label>{t.every}</label>
                     <input
                       type="number"
                       value={rule.frequency}
@@ -137,7 +139,7 @@ function AmortizationRules({
               )}
               
               <div className="rule-input-group">
-                <label>Pay Extra</label>
+                <label>{t.payExtra}</label>
                 <input
                   type="number"
                   value={rule.amount}
@@ -163,7 +165,7 @@ function AmortizationRules({
         ))}
         
         <button className="add-rule-btn" onClick={addRule}>
-          + Add Rule
+          {t.addRule}
         </button>
       </div>
     </div>

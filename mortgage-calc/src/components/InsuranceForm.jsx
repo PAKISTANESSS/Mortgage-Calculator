@@ -1,3 +1,5 @@
+import { useLanguage } from '../hooks/useLanguage'
+
 function InsuranceForm({ 
   lifeInsurance, 
   setLifeInsurance, 
@@ -6,13 +8,15 @@ function InsuranceForm({
   isExpanded, 
   setIsExpanded 
 }) {
+  const { t } = useLanguage()
+  
   return (
     <div className="section">
       <h2 
         className="section-title collapsible" 
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        🛡️ Insurance (Optional)
+        🛡️ {t.insurance}
         <span className="collapse-icon">{isExpanded ? '▼' : '▶'}</span>
       </h2>
       
@@ -20,8 +24,8 @@ function InsuranceForm({
         <div className="input-row">
           <div className="input-group">
             <label htmlFor="lifeInsurance">
-              <span className="label-text">Life Insurance</span>
-              <span className="label-unit">€/month</span>
+              <span className="label-text">{t.lifeInsurance}</span>
+              <span className="label-unit">{t.perMonth}</span>
             </label>
             <input
               id="lifeInsurance"
@@ -36,8 +40,8 @@ function InsuranceForm({
 
           <div className="input-group">
             <label htmlFor="houseInsurance">
-              <span className="label-text">House Insurance</span>
-              <span className="label-unit">€/month</span>
+              <span className="label-text">{t.houseInsurance}</span>
+              <span className="label-unit">{t.perMonth}</span>
             </label>
             <input
               id="houseInsurance"

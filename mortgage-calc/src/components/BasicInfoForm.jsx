@@ -1,11 +1,15 @@
+import { useLanguage } from '../hooks/useLanguage'
+
 function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, setEuribor, spread, setSpread }) {
+  const { t } = useLanguage()
+  
   return (
     <div className="section">
-      <h2 className="section-title">📋 Basic Information</h2>
+      <h2 className="section-title">📋 {t.basicInfo}</h2>
       
       <div className="input-group">
         <label htmlFor="loanAmount">
-          <span className="label-text">Loan Amount</span>
+          <span className="label-text">{t.loanAmount}</span>
           <span className="label-unit">€</span>
         </label>
         <input
@@ -21,8 +25,8 @@ function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, 
 
       <div className="input-group">
         <label htmlFor="months">
-          <span className="label-text">Loan Term</span>
-          <span className="label-unit">months</span>
+          <span className="label-text">{t.loanTerm}</span>
+          <span className="label-unit">{t.months}</span>
         </label>
         <input
           id="months"
@@ -38,7 +42,7 @@ function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, 
       <div className="input-row">
         <div className="input-group">
           <label htmlFor="euribor">
-            <span className="label-text">Euribor Rate</span>
+            <span className="label-text">{t.euriborRate}</span>
             <span className="label-unit">%</span>
           </label>
           <input
@@ -50,12 +54,12 @@ function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, 
             min="0"
             step="0.01"
           />
-          <span className="input-hint">💡 Euribor rates change frequently.</span>
+          <span className="input-hint">{t.euriborHint}</span>
         </div>
 
         <div className="input-group">
           <label htmlFor="spread">
-            <span className="label-text">Spread</span>
+            <span className="label-text">{t.spread}</span>
             <span className="label-unit">%</span>
           </label>
           <input

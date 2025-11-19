@@ -1,3 +1,5 @@
+import { useLanguage } from '../hooks/useLanguage'
+
 function ComparisonPieCharts({ 
   loanAmount,
   scheduleWithoutExtra,
@@ -7,10 +9,12 @@ function ComparisonPieCharts({
   lifeInsurance,
   houseInsurance
 }) {
+  const { t } = useLanguage()
+
   return (
     <div className="comparison-pies">
       <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2d3748', marginBottom: '1.5rem', marginTop: '2rem' }}>
-        Total Payment Breakdown
+        {t.totalPaymentBreakdown}
       </h3>
       <div className="pies-container">
         {/* Without Extra Amortization */}
@@ -35,7 +39,7 @@ function ComparisonPieCharts({
           
           return (
             <div className="pie-comparison-item">
-              <h4>Without Extra Payments</h4>
+              <h4>{t.withoutExtraPayments}</h4>
               <div className="pie-chart-mini">
                 <div 
                   className="pie-chart-mini-inner"
@@ -51,7 +55,7 @@ function ComparisonPieCharts({
                   }}
                 >
                   <div className="pie-chart-center-mini">
-                    <div className="pie-chart-total-mini">Total Paid</div>
+                    <div className="pie-chart-total-mini">{t.totalPaid}</div>
                     <div className="pie-chart-amount-mini">€{total.toLocaleString('pt-PT', { maximumFractionDigits: 0 })}</div>
                   </div>
                 </div>
@@ -59,16 +63,16 @@ function ComparisonPieCharts({
               <div className="pie-legend-mini">
                 <div className="legend-item-mini">
                   <span className="legend-color-mini" style={{ background: '#667eea' }}></span>
-                  <span className="legend-text-mini">Principal: €{principal.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({principalPercent}%)</span>
+                  <span className="legend-text-mini">{t.principal}: €{principal.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({principalPercent}%)</span>
                 </div>
                 <div className="legend-item-mini">
                   <span className="legend-color-mini" style={{ background: '#fc8181' }}></span>
-                  <span className="legend-text-mini">Interest: €{totalInterest.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({interestPercent}%)</span>
+                  <span className="legend-text-mini">{t.interest}: €{totalInterest.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({interestPercent}%)</span>
                 </div>
                 {totalInsurance > 0 && (
                   <div className="legend-item-mini">
                     <span className="legend-color-mini" style={{ background: '#f6ad55' }}></span>
-                    <span className="legend-text-mini">Insurance: €{totalInsurance.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({insurancePercent}%)</span>
+                    <span className="legend-text-mini">{t.insurance}: €{totalInsurance.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({insurancePercent}%)</span>
                   </div>
                 )}
               </div>
@@ -98,7 +102,7 @@ function ComparisonPieCharts({
           
           return (
             <div className="pie-comparison-item">
-              <h4>With Extra Payments</h4>
+              <h4>{t.withExtraPayments}</h4>
               <div className="pie-chart-mini">
                 <div 
                   className="pie-chart-mini-inner"
@@ -123,7 +127,7 @@ function ComparisonPieCharts({
                   }}
                 >
                   <div className="pie-chart-center-mini">
-                    <div className="pie-chart-total-mini">Total Paid</div>
+                    <div className="pie-chart-total-mini">{t.totalPaid}</div>
                     <div className="pie-chart-amount-mini">€{total.toLocaleString('pt-PT', { maximumFractionDigits: 0 })}</div>
                   </div>
                 </div>
@@ -131,31 +135,31 @@ function ComparisonPieCharts({
               <div className="pie-legend-mini">
                 <div className="legend-item-mini">
                   <span className="legend-color-mini" style={{ background: '#667eea' }}></span>
-                  <span className="legend-text-mini">Principal: €{regularPrincipal.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({regularPrincipalPercent}%)</span>
+                  <span className="legend-text-mini">{t.principal}: €{regularPrincipal.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({regularPrincipalPercent}%)</span>
                 </div>
                 {totalExtra > 0 && (
                   <div className="legend-item-mini">
                     <span className="legend-color-mini" style={{ background: '#48bb78' }}></span>
-                    <span className="legend-text-mini">Extra Payments: €{totalExtra.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({extraPercent}%)</span>
+                    <span className="legend-text-mini">{t.extraPayments}: €{totalExtra.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({extraPercent}%)</span>
                   </div>
                 )}
                 <div className="legend-item-mini">
                   <span className="legend-color-mini" style={{ background: '#fc8181' }}></span>
-                  <span className="legend-text-mini">Interest: €{totalInterest.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({interestPercent}%)</span>
+                  <span className="legend-text-mini">{t.interest}: €{totalInterest.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({interestPercent}%)</span>
                 </div>
                 {totalInsurance > 0 && (
                   <div className="legend-item-mini">
                     <span className="legend-color-mini" style={{ background: '#f6ad55' }}></span>
-                    <span className="legend-text-mini">Insurance: €{totalInsurance.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({insurancePercent}%)</span>
+                    <span className="legend-text-mini">{t.insurance}: €{totalInsurance.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({insurancePercent}%)</span>
                   </div>
                 )}
                 {totalExtra > 0 && (
                   <div className="legend-item-mini" style={{ fontSize: '0.75rem', color: '#718096', fontStyle: 'italic', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #e2e8f0' }}>
-                    💡 Saves €{(scheduleWithoutExtra.reduce((sum, row) => {
+                    {t.savesInterest} €{(scheduleWithoutExtra.reduce((sum, row) => {
                       const balance = row.month === 1 ? loanPrincipal : scheduleWithoutExtra[row.month - 2].balance
                       const monthlyRate = (parseFloat(euribor) + parseFloat(spread)) / 12 / 100
                       return sum + (balance * monthlyRate)
-                    }, 0) - totalInterest).toLocaleString('pt-PT', { maximumFractionDigits: 0 })} in interest compared to no extra payments
+                    }, 0) - totalInterest).toLocaleString('pt-PT', { maximumFractionDigits: 0 })} {t.inInterest}
                   </div>
                 )}
               </div>

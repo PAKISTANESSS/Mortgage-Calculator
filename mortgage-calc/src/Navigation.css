@@ -66,7 +66,14 @@
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-.theme-selector {
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.theme-selector,
+.language-selector {
   position: relative;
 }
 
@@ -162,6 +169,99 @@
   font-size: 1.1rem;
 }
 
+/* Language Selector */
+.language-button {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  min-width: 70px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.language-button:hover {
+  border-color: var(--theme-primary, #667eea);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.language-button:active {
+  transform: scale(0.98);
+}
+
+.language-button-icon {
+  font-size: 1.25rem;
+}
+
+.language-button-code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4a5568;
+}
+
+.language-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem;
+  min-width: 180px;
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
+
+.language-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif;
+}
+
+.language-option:hover {
+  background: #f7fafc;
+}
+
+.language-option.active {
+  background: #e6f2ff;
+}
+
+.language-name {
+  flex: 1;
+  color: #4a5568;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.language-check {
+  color: var(--theme-primary, #667eea);
+  font-weight: bold;
+  font-size: 1.3rem;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 640px) {
   .nav-container {
     flex-direction: column;
@@ -180,11 +280,18 @@
     padding: 0.5rem 0.75rem;
   }
 
-  .theme-selector {
+  .nav-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .theme-selector,
+  .language-selector {
     position: static;
   }
 
-  .theme-menu {
+  .theme-menu,
+  .language-menu {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
