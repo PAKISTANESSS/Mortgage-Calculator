@@ -264,6 +264,51 @@ function AmortizationCalculator() {
 
   const exportRef = useRef()
 
+  // Helper function to create SVG pie chart
+  const createSVGPie = (segments) => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.setAttribute('width', '200')
+    svg.setAttribute('height', '200')
+    svg.setAttribute('viewBox', '0 0 200 200')
+    svg.style.position = 'absolute'
+    svg.style.top = '0'
+    svg.style.left = '0'
+    svg.style.width = '100%'
+    svg.style.height = '100%'
+    svg.style.borderRadius = '50%'
+    
+    let currentAngle = -90 // Start from top
+    
+    segments.forEach(segment => {
+      const { percent, color } = segment
+      const angle = (percent / 100) * 360
+      const endAngle = currentAngle + angle
+      
+      const startX = 100 + 100 * Math.cos((currentAngle * Math.PI) / 180)
+      const startY = 100 + 100 * Math.sin((currentAngle * Math.PI) / 180)
+      const endX = 100 + 100 * Math.cos((endAngle * Math.PI) / 180)
+      const endY = 100 + 100 * Math.sin((endAngle * Math.PI) / 180)
+      
+      const largeArc = angle > 180 ? 1 : 0
+      
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      const pathData = [
+        `M 100 100`,
+        `L ${startX} ${startY}`,
+        `A 100 100 0 ${largeArc} 1 ${endX} ${endY}`,
+        `Z`
+      ].join(' ')
+      
+      path.setAttribute('d', pathData)
+      path.setAttribute('fill', color)
+      svg.appendChild(path)
+      
+      currentAngle = endAngle
+    })
+    
+    return svg
+  }
+
   const exportToPDF = async () => {
     if (!exportRef.current) return
 
@@ -294,35 +339,48 @@ function AmortizationCalculator() {
         table.style.overflow = 'visible'
       })
 
-      // Make result card more readable for PDF
-      const resultCards = element.querySelectorAll('.result-card')
-      const cardOriginalStyles = []
-      resultCards.forEach(card => {
-        cardOriginalStyles.push(card.style.cssText)
-        card.style.background = '#ffffff'
-        card.style.color = '#2d3748'
-        card.style.border = '2px solid #667eea'
-      })
+      // Replace CSS pie charts with SVG for PDF export
+      const pieCharts = element.querySelectorAll('.pie-chart-mini-inner')
+      const svgElements = []
+      const pieOriginalStyles = []
       
-      const resultLabels = element.querySelectorAll('.result-label')
-      const labelOriginalStyles = []
-      resultLabels.forEach(label => {
-        labelOriginalStyles.push(label.style.cssText)
-        label.style.color = '#2d3748'
-      })
-      
-      const resultAmounts = element.querySelectorAll('.result-amount')
-      const amountOriginalStyles = []
-      resultAmounts.forEach(amount => {
-        amountOriginalStyles.push(amount.style.cssText)
-        amount.style.color = '#667eea'
-      })
-      
-      const resultDetails = element.querySelectorAll('.result-details, .detail-item')
-      const detailOriginalStyles = []
-      resultDetails.forEach(detail => {
-        detailOriginalStyles.push(detail.style.cssText)
-        detail.style.color = '#2d3748'
+      pieCharts.forEach((pie) => {
+        // Extract segments from the legend
+        const comparisonItem = pie.closest('.pie-comparison-item')
+        if (!comparisonItem) return
+        
+        const legendItems = comparisonItem.querySelectorAll('.legend-item-mini')
+        const segments = []
+        
+        legendItems.forEach(item => {
+          const colorDiv = item.querySelector('.legend-color-mini')
+          const textElement = item.querySelector('.legend-text-mini')
+          
+          if (!colorDiv || !textElement) return
+          
+          const text = textElement.textContent
+          const percentMatch = text.match(/\((\d+\.?\d*)%\)/)
+          
+          if (percentMatch) {
+            segments.push({
+              color: window.getComputedStyle(colorDiv).backgroundColor || colorDiv.style.background,
+              percent: parseFloat(percentMatch[1])
+            })
+          }
+        })
+        
+        // Only create SVG if we have segments
+        if (segments.length > 0) {
+          pieOriginalStyles.push(pie.style.cssText)
+          pie.style.position = 'relative'
+          
+          const svg = createSVGPie(segments)
+          pie.appendChild(svg)
+          svgElements.push({ pie, svg })
+          
+          // Hide the gradient background
+          pie.style.background = 'transparent'
+        }
       })
 
       const pdf = new jsPDF('p', 'mm', 'a4')
@@ -455,20 +513,10 @@ function AmortizationCalculator() {
         table.style.cssText = originalStyles[index]
       })
       
-      resultCards.forEach((card, index) => {
-        card.style.cssText = cardOriginalStyles[index]
-      })
-      
-      resultLabels.forEach((label, index) => {
-        label.style.cssText = labelOriginalStyles[index]
-      })
-      
-      resultAmounts.forEach((amount, index) => {
-        amount.style.cssText = amountOriginalStyles[index]
-      })
-      
-      resultDetails.forEach((detail, index) => {
-        detail.style.cssText = detailOriginalStyles[index]
+      // Remove SVG elements and restore pie charts
+      svgElements.forEach(({ pie, svg }, index) => {
+        pie.removeChild(svg)
+        pie.style.cssText = pieOriginalStyles[index]
       })
 
       // Restore original states
