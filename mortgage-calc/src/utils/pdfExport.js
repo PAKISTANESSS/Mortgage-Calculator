@@ -256,14 +256,30 @@ export async function exportReportToPDF({
     if (chartSection && chartDisplay !== null) chartSection.style.display = chartDisplay
     if (scheduleSection && scheduleDisplay !== null) scheduleSection.style.display = scheduleDisplay
     
-    // Add chart section on new page
+    // Add chart section on new page with styling
     if (chartSection) {
+      const chartOriginalStyle = chartSection.style.cssText
+      chartSection.style.background = 'white'
+      chartSection.style.padding = '2rem'
+      chartSection.style.borderRadius = '20px'
+      chartSection.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'
+      
       await captureAndAddToPDF(chartSection, pdf, false)
+      
+      chartSection.style.cssText = chartOriginalStyle
     }
     
-    // Add schedule section on new page
+    // Add schedule section on new page with styling
     if (scheduleSection) {
+      const scheduleOriginalStyle = scheduleSection.style.cssText
+      scheduleSection.style.background = 'white'
+      scheduleSection.style.padding = '2rem'
+      scheduleSection.style.borderRadius = '20px'
+      scheduleSection.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'
+      
       await captureAndAddToPDF(scheduleSection, pdf, false)
+      
+      scheduleSection.style.cssText = scheduleOriginalStyle
     }
 
     // Restore original styles
