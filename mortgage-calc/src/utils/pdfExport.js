@@ -2,7 +2,7 @@ import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 /**
- * Create SVG pie chart for PDF export
+ * Create SVG donut chart for PDF export
  * @param {Array} segments - Array of {color, percent} objects
  * @returns {SVGElement} SVG element
  */
@@ -18,6 +18,8 @@ export function createSVGPie(segments) {
   svg.style.height = '100%'
   svg.style.borderRadius = '50%'
   
+  const outerRadius = 100
+  const innerRadius = 65 // Creates donut effect
   let currentAngle = -90 // Start from top
   
   segments.forEach(segment => {
@@ -25,18 +27,27 @@ export function createSVGPie(segments) {
     const angle = (percent / 100) * 360
     const endAngle = currentAngle + angle
     
-    const startX = 100 + 100 * Math.cos((currentAngle * Math.PI) / 180)
-    const startY = 100 + 100 * Math.sin((currentAngle * Math.PI) / 180)
-    const endX = 100 + 100 * Math.cos((endAngle * Math.PI) / 180)
-    const endY = 100 + 100 * Math.sin((endAngle * Math.PI) / 180)
+    // Outer arc points
+    const startOuterX = 100 + outerRadius * Math.cos((currentAngle * Math.PI) / 180)
+    const startOuterY = 100 + outerRadius * Math.sin((currentAngle * Math.PI) / 180)
+    const endOuterX = 100 + outerRadius * Math.cos((endAngle * Math.PI) / 180)
+    const endOuterY = 100 + outerRadius * Math.sin((endAngle * Math.PI) / 180)
+    
+    // Inner arc points
+    const startInnerX = 100 + innerRadius * Math.cos((currentAngle * Math.PI) / 180)
+    const startInnerY = 100 + innerRadius * Math.sin((currentAngle * Math.PI) / 180)
+    const endInnerX = 100 + innerRadius * Math.cos((endAngle * Math.PI) / 180)
+    const endInnerY = 100 + innerRadius * Math.sin((endAngle * Math.PI) / 180)
     
     const largeArc = angle > 180 ? 1 : 0
     
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    // Create donut segment path
     const pathData = [
-      `M 100 100`,
-      `L ${startX} ${startY}`,
-      `A 100 100 0 ${largeArc} 1 ${endX} ${endY}`,
+      `M ${startOuterX} ${startOuterY}`,
+      `A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${endOuterX} ${endOuterY}`,
+      `L ${endInnerX} ${endInnerY}`,
+      `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${startInnerX} ${startInnerY}`,
       `Z`
     ].join(' ')
     
@@ -46,6 +57,14 @@ export function createSVGPie(segments) {
     
     currentAngle = endAngle
   })
+  
+  // Add white center circle for donut effect
+  const centerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+  centerCircle.setAttribute('cx', '100')
+  centerCircle.setAttribute('cy', '100')
+  centerCircle.setAttribute('r', innerRadius.toString())
+  centerCircle.setAttribute('fill', 'white')
+  svg.appendChild(centerCircle)
   
   return svg
 }
@@ -91,11 +110,21 @@ export function replacePieChartsWithSVG(element) {
       pie.style.position = 'relative'
       
       const svg = createSVGPie(segments)
-      pie.appendChild(svg)
+      svg.style.zIndex = '0'
+      
+      // Insert SVG as first child so it's behind the center text
+      pie.insertBefore(svg, pie.firstChild)
       svgElements.push({ pie, svg })
       
-      // Hide the gradient background
+      // Hide the gradient background and ensure center text is visible
       pie.style.background = 'transparent'
+      
+      // Make sure center content is above the SVG
+      const centerElement = pie.querySelector('.pie-chart-center-mini')
+      if (centerElement) {
+        centerElement.style.position = 'relative'
+        centerElement.style.zIndex = '1'
+      }
     }
   })
 
@@ -250,7 +279,12 @@ export async function exportReportToPDF({
     setIsScheduleExpanded(wasScheduleExpanded)
     setIsInsuranceExpanded(wasInsuranceExpanded)
     
-    pdf.save('amortization-report.pdf')
+    // Generate filename with date (format: YYYY-MM-DD)
+    const today = new Date()
+    const dateString = today.toISOString().split('T')[0]
+    const filename = `amortization-plan-${dateString}.pdf`
+    
+    pdf.save(filename)
     setIsExporting(false)
   } catch (error) {
     console.error('Error generating PDF:', error)
