@@ -1,64 +1,36 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import './Calculator.css'
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
+import { useLocalStorage } from './hooks/useLocalStorage'
+import { calculateAmortizationSchedule, calculateScheduleWithoutExtra } from './utils/calculations'
+import { exportReportToPDF } from './utils/pdfExport'
+import BasicInfoForm from './components/BasicInfoForm'
+import InsuranceForm from './components/InsuranceForm'
+import AmortizationRules from './components/AmortizationRules'
+import BalanceComparisonChart from './components/BalanceComparisonChart'
+import ComparisonPieCharts from './components/ComparisonPieCharts'
 
 function AmortizationCalculator() {
-  // Load from localStorage or use empty string
-  const [loanAmount, setLoanAmount] = useState(() => localStorage.getItem('loanAmount') || '')
-  const [months, setMonths] = useState(() => localStorage.getItem('months') || '')
-  const [euribor, setEuribor] = useState(() => localStorage.getItem('euribor') || '')
-  const [spread, setSpread] = useState(() => localStorage.getItem('spread') || '')
-  const [lifeInsurance, setLifeInsurance] = useState(() => localStorage.getItem('lifeInsurance') || '')
-  const [houseInsurance, setHouseInsurance] = useState(() => localStorage.getItem('houseInsurance') || '')
+  // Form state with localStorage persistence
+  const [loanAmount, setLoanAmount] = useLocalStorage('loanAmount', '')
+  const [months, setMonths] = useLocalStorage('months', '')
+  const [euribor, setEuribor] = useLocalStorage('euribor', '')
+  const [spread, setSpread] = useLocalStorage('spread', '')
+  const [lifeInsurance, setLifeInsurance] = useLocalStorage('lifeInsurance', '')
+  const [houseInsurance, setHouseInsurance] = useLocalStorage('houseInsurance', '')
+  const [amortizationRules, setAmortizationRules] = useLocalStorage('amortizationRules', [
+    { type: 'recurring', frequency: '1', period: 'year', amount: '1000', month: '', year: '' }
+  ])
+  const [recalculatePayment, setRecalculatePayment] = useLocalStorage('recalculatePayment', false)
+
+  // UI state
   const [amortizationSchedule, setAmortizationSchedule] = useState([])
   const [scheduleWithoutExtra, setScheduleWithoutExtra] = useState([])
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
   const [isInsuranceExpanded, setIsInsuranceExpanded] = useState(false)
   const [isChartExpanded, setIsChartExpanded] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
-  const [amortizationRules, setAmortizationRules] = useState(() => {
-    const saved = localStorage.getItem('amortizationRules')
-    return saved ? JSON.parse(saved) : [{ type: 'recurring', frequency: '1', period: 'year', amount: '1000', month: '', year: '' }]
-  })
-  const [recalculatePayment, setRecalculatePayment] = useState(() => {
-    const saved = localStorage.getItem('recalculatePayment')
-    return saved ? JSON.parse(saved) : false
-  })
 
-  // Save to localStorage whenever values change
-  useEffect(() => {
-    localStorage.setItem('loanAmount', loanAmount)
-    localStorage.setItem('months', months)
-    localStorage.setItem('euribor', euribor)
-    localStorage.setItem('spread', spread)
-    localStorage.setItem('lifeInsurance', lifeInsurance)
-    localStorage.setItem('houseInsurance', houseInsurance)
-  }, [loanAmount, months, euribor, spread, lifeInsurance, houseInsurance])
-
-  // Save amortization rules to localStorage
-  useEffect(() => {
-    localStorage.setItem('amortizationRules', JSON.stringify(amortizationRules))
-  }, [amortizationRules])
-
-  // Save recalculate payment setting to localStorage
-  useEffect(() => {
-    localStorage.setItem('recalculatePayment', JSON.stringify(recalculatePayment))
-  }, [recalculatePayment])
-
-  const addAmortizationRule = () => {
-    setAmortizationRules([...amortizationRules, { type: 'recurring', frequency: '', period: 'month', amount: '', month: '', year: '' }])
-  }
-
-  const removeAmortizationRule = (index) => {
-    setAmortizationRules(amortizationRules.filter((_, i) => i !== index))
-  }
-
-  const updateAmortizationRule = (index, field, value) => {
-    const newRules = [...amortizationRules]
-    newRules[index][field] = value
-    setAmortizationRules(newRules)
-  }
+  const exportRef = useRef()
 
   const calculateAmortization = () => {
     const principal = parseFloat(loanAmount)
@@ -74,166 +46,26 @@ function AmortizationCalculator() {
       return
     }
 
-    // Calculate monthly interest rate
+    // Calculate amortization schedule
+    const schedule = calculateAmortizationSchedule({
+      principal,
+      numberOfMonths,
+      euriborRate,
+      spreadRate,
+      lifeInsurance: life,
+      houseInsurance: house,
+      amortizationRules,
+      recalculatePayment
+    })
+
+    // Calculate schedule without extra payments for comparison
     const annualRate = euriborRate + spreadRate
     const monthlyRate = annualRate / 12 / 100
-
-    // Calculate monthly payment
-    let payment
-    if (monthlyRate === 0) {
-      payment = principal / numberOfMonths
-    } else {
-      const x = Math.pow(1 + monthlyRate, numberOfMonths)
-      payment = (principal * monthlyRate * x) / (x - 1)
-    }
-
-    // Total insurance per month
-    const totalInsurance = life + house
-
-    // Generate amortization schedule with yearly summaries
-    const schedule = []
-    let remainingBalance = principal
-    let yearlyPrincipal = 0
-    let yearlyInterest = 0
-    let yearlyInsurance = 0
-    let yearlyBasePayment = 0
-    let yearlyExtraAmortization = 0
-    let yearlyTotal = 0
-
-    for (let i = 1; i <= numberOfMonths; i++) {
-      // Recalculate payment if mode is enabled and there are extra payments
-      let currentPayment = payment
-      if (recalculatePayment && i > 1 && remainingBalance > 0) {
-        const remainingMonths = numberOfMonths - i + 1
-        if (monthlyRate === 0) {
-          currentPayment = remainingBalance / remainingMonths
-        } else {
-          const x = Math.pow(1 + monthlyRate, remainingMonths)
-          currentPayment = (remainingBalance * monthlyRate * x) / (x - 1)
-        }
-      }
-      
-      const interestPayment = remainingBalance * monthlyRate
-      const principalPayment = currentPayment - interestPayment
-      
-      // Apply amortization rules
-      let extraAmortization = 0
-      amortizationRules.forEach(rule => {
-        const amt = parseFloat(rule.amount)
-        if (amt) {
-          if (rule.type === 'onetime') {
-            // One-time payment on specific month and year
-            const ruleMonth = parseInt(rule.month)
-            const ruleYear = parseInt(rule.year)
-            if (ruleMonth && ruleYear) {
-              const targetMonth = (ruleYear - 1) * 12 + ruleMonth
-              if (i === targetMonth) {
-                extraAmortization += amt
-              }
-            }
-          } else {
-            // Recurring payment
-            const freq = parseInt(rule.frequency)
-            if (freq) {
-              const periodInMonths = rule.period === 'year' ? freq * 12 : freq
-              if (i % periodInMonths === 0) {
-                extraAmortization += amt
-              }
-            }
-          }
-        }
-      })
-      
-      remainingBalance -= principalPayment
-      remainingBalance -= extraAmortization
-      remainingBalance = Math.max(0, remainingBalance)
-
-      const monthInYear = ((i - 1) % 12) + 1
-      const yearNumber = Math.floor((i - 1) / 12) + 1
-
-      schedule.push({
-        month: monthInYear,
-        year: yearNumber,
-        principal: principalPayment,
-        interest: interestPayment,
-        insurance: totalInsurance,
-        basePayment: currentPayment + totalInsurance,
-        extraAmortization: extraAmortization,
-        totalPayment: currentPayment + totalInsurance + extraAmortization,
-        balance: remainingBalance,
-        isYearlySummary: false
-      })
-
-      yearlyPrincipal += principalPayment
-      yearlyInterest += interestPayment
-      yearlyInsurance += totalInsurance
-      yearlyBasePayment += currentPayment + totalInsurance
-      yearlyExtraAmortization += extraAmortization
-      yearlyTotal += currentPayment + totalInsurance + extraAmortization
-      
-      // Stop if balance reaches 0
-      if (remainingBalance === 0) {
-        break
-      }
-
-      if (i % 12 === 0) {
-        schedule.push({
-          month: 'Total',
-          year: i / 12,
-          principal: yearlyPrincipal,
-          interest: yearlyInterest,
-          insurance: yearlyInsurance,
-          basePayment: yearlyBasePayment,
-          extraAmortization: yearlyExtraAmortization,
-          totalPayment: yearlyTotal,
-          balance: Math.max(0, remainingBalance),
-          isYearlySummary: true
-        })
-        yearlyPrincipal = 0
-        yearlyInterest = 0
-        yearlyInsurance = 0
-        yearlyBasePayment = 0
-        yearlyExtraAmortization = 0
-        yearlyTotal = 0
-      }
-    }
-
-    // Add final year summary if there are remaining months (not a full year)
-    if (numberOfMonths % 12 !== 0 && yearlyTotal > 0) {
-      const finalYear = Math.floor(numberOfMonths / 12) + 1
-      schedule.push({
-        month: 'Total',
-        year: finalYear,
-        principal: yearlyPrincipal,
-        interest: yearlyInterest,
-        insurance: yearlyInsurance,
-        basePayment: yearlyBasePayment,
-        extraAmortization: yearlyExtraAmortization,
-        totalPayment: yearlyTotal,
-        balance: Math.max(0, remainingBalance),
-        isYearlySummary: true
-      })
-    }
-
-    // Generate schedule without extra amortization for comparison
-    const scheduleNoExtra = []
-    let balanceNoExtra = principal
-    for (let i = 1; i <= numberOfMonths; i++) {
-      const interestPayment = balanceNoExtra * monthlyRate
-      const principalPayment = payment - interestPayment
-      
-      balanceNoExtra -= principalPayment
-      balanceNoExtra = Math.max(0, balanceNoExtra)
-
-      scheduleNoExtra.push({
-        month: i,
-        balance: balanceNoExtra
-      })
-
-      if (balanceNoExtra === 0) {
-        break
-      }
-    }
+    const scheduleNoExtra = calculateScheduleWithoutExtra({
+      principal,
+      numberOfMonths,
+      monthlyRate
+    })
 
     setAmortizationSchedule(schedule)
     setScheduleWithoutExtra(scheduleNoExtra)
@@ -252,286 +84,24 @@ function AmortizationCalculator() {
     setRecalculatePayment(false)
   }
 
+  const handleExportToPDF = () => {
+    exportReportToPDF({
+      exportRef,
+      isChartExpanded,
+      isScheduleExpanded,
+      isInsuranceExpanded,
+      setIsChartExpanded,
+      setIsScheduleExpanded,
+      setIsInsuranceExpanded,
+      setIsExporting
+    })
+  }
+
   const totalInterest = amortizationSchedule.length > 0
     ? amortizationSchedule
         .filter(row => !row.isYearlySummary)
         .reduce((sum, row) => sum + row.interest, 0)
     : 0
-
-  const monthlyPayment = amortizationSchedule.length > 0 && !amortizationSchedule[0].isYearlySummary
-    ? amortizationSchedule[0].totalPayment
-    : 0
-
-  const exportRef = useRef()
-
-  // Helper function to create SVG pie chart
-  const createSVGPie = (segments) => {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    svg.setAttribute('width', '200')
-    svg.setAttribute('height', '200')
-    svg.setAttribute('viewBox', '0 0 200 200')
-    svg.style.position = 'absolute'
-    svg.style.top = '0'
-    svg.style.left = '0'
-    svg.style.width = '100%'
-    svg.style.height = '100%'
-    svg.style.borderRadius = '50%'
-    
-    let currentAngle = -90 // Start from top
-    
-    segments.forEach(segment => {
-      const { percent, color } = segment
-      const angle = (percent / 100) * 360
-      const endAngle = currentAngle + angle
-      
-      const startX = 100 + 100 * Math.cos((currentAngle * Math.PI) / 180)
-      const startY = 100 + 100 * Math.sin((currentAngle * Math.PI) / 180)
-      const endX = 100 + 100 * Math.cos((endAngle * Math.PI) / 180)
-      const endY = 100 + 100 * Math.sin((endAngle * Math.PI) / 180)
-      
-      const largeArc = angle > 180 ? 1 : 0
-      
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-      const pathData = [
-        `M 100 100`,
-        `L ${startX} ${startY}`,
-        `A 100 100 0 ${largeArc} 1 ${endX} ${endY}`,
-        `Z`
-      ].join(' ')
-      
-      path.setAttribute('d', pathData)
-      path.setAttribute('fill', color)
-      svg.appendChild(path)
-      
-      currentAngle = endAngle
-    })
-    
-    return svg
-  }
-
-  const exportToPDF = async () => {
-    if (!exportRef.current) return
-
-    try {
-      setIsExporting(true)
-      
-      // Save current states
-      const wasChartExpanded = isChartExpanded
-      const wasScheduleExpanded = isScheduleExpanded
-      const wasInsuranceExpanded = isInsuranceExpanded
-
-      // Temporarily expand all sections for export
-      setIsChartExpanded(true)
-      setIsScheduleExpanded(true)
-      setIsInsuranceExpanded(true)
-
-      // Wait for state updates to render
-      await new Promise(resolve => setTimeout(resolve, 300))
-
-      const element = exportRef.current
-      
-      // Remove any max-height restrictions temporarily
-      const tables = element.querySelectorAll('.amortization-table-wrapper')
-      const originalStyles = []
-      tables.forEach(table => {
-        originalStyles.push(table.style.cssText)
-        table.style.maxHeight = 'none'
-        table.style.overflow = 'visible'
-      })
-
-      // Replace CSS pie charts with SVG for PDF export
-      const pieCharts = element.querySelectorAll('.pie-chart-mini-inner')
-      const svgElements = []
-      const pieOriginalStyles = []
-      
-      pieCharts.forEach((pie) => {
-        // Extract segments from the legend
-        const comparisonItem = pie.closest('.pie-comparison-item')
-        if (!comparisonItem) return
-        
-        const legendItems = comparisonItem.querySelectorAll('.legend-item-mini')
-        const segments = []
-        
-        legendItems.forEach(item => {
-          const colorDiv = item.querySelector('.legend-color-mini')
-          const textElement = item.querySelector('.legend-text-mini')
-          
-          if (!colorDiv || !textElement) return
-          
-          const text = textElement.textContent
-          const percentMatch = text.match(/\((\d+\.?\d*)%\)/)
-          
-          if (percentMatch) {
-            segments.push({
-              color: window.getComputedStyle(colorDiv).backgroundColor || colorDiv.style.background,
-              percent: parseFloat(percentMatch[1])
-            })
-          }
-        })
-        
-        // Only create SVG if we have segments
-        if (segments.length > 0) {
-          pieOriginalStyles.push(pie.style.cssText)
-          pie.style.position = 'relative'
-          
-          const svg = createSVGPie(segments)
-          pie.appendChild(svg)
-          svgElements.push({ pie, svg })
-          
-          // Hide the gradient background
-          pie.style.background = 'transparent'
-        }
-      })
-
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      
-      // Find the chart and schedule sections to split before them
-      const allSections = Array.from(element.querySelectorAll('.section'))
-      const chartSection = allSections.find(s => s.textContent.includes('Balance Comparison'))
-      const scheduleSection = allSections.find(s => s.textContent.includes('Amortization Schedule'))
-      
-      // Temporarily hide chart and schedule sections
-      const chartDisplay = chartSection ? chartSection.style.display : null
-      const scheduleDisplay = scheduleSection ? scheduleSection.style.display : null
-      
-      if (chartSection) chartSection.style.display = 'none'
-      if (scheduleSection) scheduleSection.style.display = 'none'
-      
-      // Capture form sections (everything before charts)
-      const formCanvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowHeight: element.scrollHeight
-      })
-      
-      // Restore sections
-      if (chartSection && chartDisplay !== null) chartSection.style.display = chartDisplay
-      if (scheduleSection && scheduleDisplay !== null) scheduleSection.style.display = scheduleDisplay
-      
-      const formImgData = formCanvas.toDataURL('image/png')
-      const formImgWidth = formCanvas.width
-      const formImgHeight = formCanvas.height
-      const formRatio = pdfWidth / formImgWidth
-      const formScaledHeight = formImgHeight * formRatio
-      
-      // Add form sections
-      if (formScaledHeight <= pdfHeight) {
-        pdf.addImage(formImgData, 'PNG', 0, 0, pdfWidth, formScaledHeight)
-      } else {
-        let heightLeft = formScaledHeight
-        let position = 0
-        
-        pdf.addImage(formImgData, 'PNG', 0, position, pdfWidth, formScaledHeight)
-        heightLeft -= pdfHeight
-        
-        while (heightLeft > 0) {
-          position = heightLeft - formScaledHeight
-          pdf.addPage()
-          pdf.addImage(formImgData, 'PNG', 0, position, pdfWidth, formScaledHeight)
-          heightLeft -= pdfHeight
-        }
-      }
-      
-      // Add chart section on new page
-      if (chartSection) {
-        pdf.addPage()
-        
-        const chartCanvas = await html2canvas(chartSection, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          windowHeight: chartSection.scrollHeight
-        })
-        
-        const chartImgData = chartCanvas.toDataURL('image/png')
-        const chartImgWidth = chartCanvas.width
-        const chartImgHeight = chartCanvas.height
-        const chartRatio = pdfWidth / chartImgWidth
-        const chartScaledHeight = chartImgHeight * chartRatio
-        
-        if (chartScaledHeight <= pdfHeight) {
-          pdf.addImage(chartImgData, 'PNG', 0, 0, pdfWidth, chartScaledHeight)
-        } else {
-          let heightLeft = chartScaledHeight
-          let position = 0
-          
-          pdf.addImage(chartImgData, 'PNG', 0, position, pdfWidth, chartScaledHeight)
-          heightLeft -= pdfHeight
-          
-          while (heightLeft > 0) {
-            position = heightLeft - chartScaledHeight
-            pdf.addPage()
-            pdf.addImage(chartImgData, 'PNG', 0, position, pdfWidth, chartScaledHeight)
-            heightLeft -= pdfHeight
-          }
-        }
-      }
-      
-      // Add schedule section on new page
-      if (scheduleSection) {
-        pdf.addPage()
-        
-        const scheduleCanvas = await html2canvas(scheduleSection, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          windowHeight: scheduleSection.scrollHeight
-        })
-        
-        const scheduleImgData = scheduleCanvas.toDataURL('image/png')
-        const scheduleImgWidth = scheduleCanvas.width
-        const scheduleImgHeight = scheduleCanvas.height
-        const scheduleRatio = pdfWidth / scheduleImgWidth
-        const scheduleScaledHeight = scheduleImgHeight * scheduleRatio
-        
-        if (scheduleScaledHeight <= pdfHeight) {
-          pdf.addImage(scheduleImgData, 'PNG', 0, 0, pdfWidth, scheduleScaledHeight)
-        } else {
-          let heightLeft = scheduleScaledHeight
-          let position = 0
-          
-          pdf.addImage(scheduleImgData, 'PNG', 0, position, pdfWidth, scheduleScaledHeight)
-          heightLeft -= pdfHeight
-          
-          while (heightLeft > 0) {
-            position = heightLeft - scheduleScaledHeight
-            pdf.addPage()
-            pdf.addImage(scheduleImgData, 'PNG', 0, position, pdfWidth, scheduleScaledHeight)
-            heightLeft -= pdfHeight
-          }
-        }
-      }
-
-      // Restore original styles
-      tables.forEach((table, index) => {
-        table.style.cssText = originalStyles[index]
-      })
-      
-      // Remove SVG elements and restore pie charts
-      svgElements.forEach(({ pie, svg }, index) => {
-        pie.removeChild(svg)
-        pie.style.cssText = pieOriginalStyles[index]
-      })
-
-      // Restore original states
-      setIsChartExpanded(wasChartExpanded)
-      setIsScheduleExpanded(wasScheduleExpanded)
-      setIsInsuranceExpanded(wasInsuranceExpanded)
-      
-      pdf.save('amortization-report.pdf')
-      setIsExporting(false)
-    } catch (error) {
-      console.error('Error generating PDF:', error)
-      alert('Error generating PDF. Please try again.')
-      setIsExporting(false)
-    }
-  }
 
   return (
     <div className="app">
@@ -542,274 +112,32 @@ function AmortizationCalculator() {
         </header>
 
         <div className="calculator-card" ref={exportRef}>
-          {/* Amortization Rules Section */}
-          <div className="section">
-            <h2 className="section-title">📝 Amortization Rules</h2>
-            
-            <div>
-              <p style={{ fontSize: '0.9rem', color: '#718096', marginBottom: '1rem' }}>
-                Add recurring (e.g., every year) or one-time (e.g., month 10 of year 4) extra payments to reduce your loan faster.
-              </p>
-              
-              <div style={{ 
-                marginBottom: '1.5rem', 
-                padding: '1rem', 
-                background: '#f7fafc', 
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0'
-              }}>
-                <label style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  cursor: 'pointer',
-                  fontSize: '0.95rem',
-                  fontWeight: '500',
-                  color: '#2d3748'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={recalculatePayment}
-                    onChange={(e) => setRecalculatePayment(e.target.checked)}
-                    style={{ 
-                      marginRight: '0.75rem',
-                      width: '18px',
-                      height: '18px',
-                      cursor: 'pointer'
-                    }}
-                  />
-                  Recalculate monthly payment after each extra payment
-                </label>
-                <p style={{ 
-                  fontSize: '0.85rem', 
-                  color: '#718096', 
-                  marginTop: '0.5rem',
-                  marginLeft: '26px',
-                  marginBottom: 0
-                }}>
-                  {recalculatePayment 
-                    ? '✓ Payment decreases each month as balance reduces (you pay less total interest)'
-                    : '✗ Payment stays fixed, loan finishes earlier (standard mortgage behavior)'}
-                </p>
-              </div>
-              
-              {amortizationRules.map((rule, index) => (
-                <div key={index} className="rule-row">
-                  <div className="rule-inputs">
-                    <div className="rule-input-group">
-                      <select
-                        value={rule.type || 'recurring'}
-                        onChange={(e) => updateAmortizationRule(index, 'type', e.target.value)}
-                      >
-                        <option value="recurring">Recurring</option>
-                        <option value="onetime">One-time</option>
-                      </select>
-                    </div>
-                    
-                    {rule.type === 'onetime' ? (
-                      <>
-                        <div className="rule-input-group">
-                          <label>Month</label>
-                          <input
-                            type="number"
-                            value={rule.month}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 12)) {
-                                updateAmortizationRule(index, 'month', value)
-                              }
-                            }}
-                            placeholder="10"
-                            min="1"
-                            max="12"
-                          />
-                        </div>
-                        
-                        <div className="rule-input-group">
-                          <label>Year</label>
-                          <input
-                            type="number"
-                            value={rule.year}
-                            onChange={(e) => updateAmortizationRule(index, 'year', e.target.value)}
-                            placeholder="4"
-                            min="1"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="rule-input-group">
-                          <label>Every</label>
-                          <input
-                            type="number"
-                            value={rule.frequency}
-                            onChange={(e) => updateAmortizationRule(index, 'frequency', e.target.value)}
-                            placeholder="2"
-                            min="1"
-                          />
-                        </div>
-                        
-                        <div className="rule-input-group">
-                          <select
-                            value={rule.period}
-                            onChange={(e) => updateAmortizationRule(index, 'period', e.target.value)}
-                          >
-                            <option value="month">Month(s)</option>
-                            <option value="year">Year(s)</option>
-                          </select>
-                        </div>
-                      </>
-                    )}
-                    
-                    <div className="rule-input-group">
-                      <label>Pay Extra</label>
-                      <input
-                        type="number"
-                        value={rule.amount}
-                        onChange={(e) => updateAmortizationRule(index, 'amount', e.target.value)}
-                        placeholder="500"
-                        min="0"
-                        step="100"
-                      />
-                      <span style={{ marginLeft: '0.5rem', color: '#4a5568', fontWeight: '600', fontSize: '1rem' }}>€</span>
-                    </div>
-                    
-                    <div className="rule-input-group">
-                      <button
-                        className="remove-rule-btn"
-                        onClick={() => removeAmortizationRule(index)}
-                        title="Remove rule"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              <button className="add-rule-btn" onClick={addAmortizationRule}>
-                + Add Rule
-              </button>
-            </div>
-          </div>
+          <AmortizationRules
+            amortizationRules={amortizationRules}
+            setAmortizationRules={setAmortizationRules}
+            recalculatePayment={recalculatePayment}
+            setRecalculatePayment={setRecalculatePayment}
+          />
 
-          {/* Basic Section */}
-          <div className="section">
-            <h2 className="section-title">📋 Basic Information</h2>
-            
-            <div className="input-group">
-              <label htmlFor="loanAmount">
-                <span className="label-text">Loan Amount</span>
-                <span className="label-unit">€</span>
-              </label>
-              <input
-                id="loanAmount"
-                type="number"
-                value={loanAmount}
-                onChange={(e) => setLoanAmount(e.target.value)}
-                placeholder="250000"
-                min="0"
-                step="1000"
-              />
-            </div>
+          <BasicInfoForm
+            loanAmount={loanAmount}
+            setLoanAmount={setLoanAmount}
+            months={months}
+            setMonths={setMonths}
+            euribor={euribor}
+            setEuribor={setEuribor}
+            spread={spread}
+            setSpread={setSpread}
+          />
 
-            <div className="input-group">
-              <label htmlFor="months">
-                <span className="label-text">Loan Term</span>
-                <span className="label-unit">months</span>
-              </label>
-              <input
-                id="months"
-                type="number"
-                value={months}
-                onChange={(e) => setMonths(e.target.value)}
-                placeholder="360"
-                min="1"
-                step="1"
-              />
-            </div>
-
-            <div className="input-row">
-              <div className="input-group">
-                <label htmlFor="euribor">
-                  <span className="label-text">Euribor Rate</span>
-                  <span className="label-unit">%</span>
-                </label>
-                <input
-                  id="euribor"
-                  type="number"
-                  value={euribor}
-                  onChange={(e) => setEuribor(e.target.value)}
-                  placeholder="3.5"
-                  min="0"
-                  step="0.01"
-                />
-                <span className="input-hint">💡 Euribor rates change frequently.</span>
-              </div>
-
-              <div className="input-group">
-                <label htmlFor="spread">
-                  <span className="label-text">Spread</span>
-                  <span className="label-unit">%</span>
-                </label>
-                <input
-                  id="spread"
-                  type="number"
-                  value={spread}
-                  onChange={(e) => setSpread(e.target.value)}
-                  placeholder="1.0"
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Insurance Section */}
-          <div className="section">
-            <h2 
-              className="section-title collapsible" 
-              onClick={() => setIsInsuranceExpanded(!isInsuranceExpanded)}
-            >
-              🛡️ Insurance (Optional)
-              <span className="collapse-icon">{isInsuranceExpanded ? '▼' : '▶'}</span>
-            </h2>
-            
-            {isInsuranceExpanded && (
-              <div className="input-row">
-                <div className="input-group">
-                  <label htmlFor="lifeInsurance">
-                    <span className="label-text">Life Insurance</span>
-                    <span className="label-unit">€/month</span>
-                  </label>
-                  <input
-                    id="lifeInsurance"
-                    type="number"
-                    value={lifeInsurance}
-                    onChange={(e) => setLifeInsurance(e.target.value)}
-                    placeholder="0"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-
-                <div className="input-group">
-                  <label htmlFor="houseInsurance">
-                    <span className="label-text">House Insurance</span>
-                    <span className="label-unit">€/month</span>
-                  </label>
-                  <input
-                    id="houseInsurance"
-                    type="number"
-                    value={houseInsurance}
-                    onChange={(e) => setHouseInsurance(e.target.value)}
-                    placeholder="0"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          <InsuranceForm
+            lifeInsurance={lifeInsurance}
+            setLifeInsurance={setLifeInsurance}
+            houseInsurance={houseInsurance}
+            setHouseInsurance={setHouseInsurance}
+            isExpanded={isInsuranceExpanded}
+            setIsExpanded={setIsInsuranceExpanded}
+          />
 
           <div className="button-group">
             <button className="calculate-btn" onClick={calculateAmortization}>
@@ -833,7 +161,7 @@ function AmortizationCalculator() {
                 const firstYearAvgBase = firstYearPayments.reduce((sum, row) => sum + row.basePayment, 0) / firstYearEnd
                 const firstYearAvgTotal = firstYearPayments.reduce((sum, row) => sum + row.totalPayment, 0) / firstYearEnd
                 
-                // 30% mark average (year around 30%)
+                // 30% mark average
                 const thirtyPercentMonth = Math.floor(totalMonths * 0.30)
                 const yearAt30Start = Math.max(0, thirtyPercentMonth - 6)
                 const yearAt30End = Math.min(totalMonths, thirtyPercentMonth + 6)
@@ -845,7 +173,7 @@ function AmortizationCalculator() {
                   ? yearAt30Payments.reduce((sum, row) => sum + row.totalPayment, 0) / yearAt30Payments.length 
                   : 0
                 
-                // 60% mark average (year around 60%)
+                // 60% mark average
                 const sixtyPercentMonth = Math.floor(totalMonths * 0.60)
                 const yearAt60Start = Math.max(0, sixtyPercentMonth - 6)
                 const yearAt60End = Math.min(totalMonths, sixtyPercentMonth + 6)
@@ -863,16 +191,10 @@ function AmortizationCalculator() {
                       <div>
                         <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>Year 1</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
-                          €{firstYearAvgBase.toLocaleString('pt-PT', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}
+                          €{firstYearAvgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           {firstYearAvgTotal !== firstYearAvgBase && (
                             <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
-                              → (€{firstYearAvgTotal.toLocaleString('pt-PT', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                              })})
+                              → (€{firstYearAvgTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                             </span>
                           )}
                         </div>
@@ -880,16 +202,10 @@ function AmortizationCalculator() {
                       <div>
                         <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>Year {Math.ceil(totalMonths * 0.30 / 12)}</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
-                          €{yearAt30AvgBase.toLocaleString('pt-PT', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}
+                          €{yearAt30AvgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           {yearAt30AvgTotal !== yearAt30AvgBase && (
                             <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
-                              → (€{yearAt30AvgTotal.toLocaleString('pt-PT', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                              })})
+                              → (€{yearAt30AvgTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                             </span>
                           )}
                         </div>
@@ -897,16 +213,10 @@ function AmortizationCalculator() {
                       <div>
                         <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>Year {Math.ceil(totalMonths * 0.60 / 12)}</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
-                          €{yearAt60AvgBase.toLocaleString('pt-PT', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}
+                          €{yearAt60AvgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           {yearAt60AvgTotal !== yearAt60AvgBase && (
                             <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
-                              → (€{yearAt60AvgTotal.toLocaleString('pt-PT', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                              })})
+                              → (€{yearAt60AvgTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                             </span>
                           )}
                         </div>
@@ -925,18 +235,12 @@ function AmortizationCalculator() {
                   <span>€{(() => {
                     const dataPoints = amortizationSchedule.filter(row => !row.isYearlySummary)
                     const totalPaid = dataPoints.reduce((sum, row) => sum + row.totalPayment, 0)
-                    return totalPaid.toLocaleString('pt-PT', { 
-                      minimumFractionDigits: 2, 
-                      maximumFractionDigits: 2 
-                    })
+                    return totalPaid.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                   })()}</span>
                 </div>
                 <div className="detail-item">
                   <span>Total Interest:</span>
-                  <span>€{totalInterest.toLocaleString('pt-PT', { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
-                  })}</span>
+                  <span>€{totalInterest.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             </div>
@@ -944,7 +248,7 @@ function AmortizationCalculator() {
 
           {amortizationSchedule.length > 0 && (
             <div style={{ textAlign: 'center', margin: '3rem 0 2.5rem 0' }}>
-              <button className="export-btn-inline" onClick={exportToPDF} title="Export to PDF">
+              <button className="export-btn-inline" onClick={handleExportToPDF} title="Export to PDF">
                 📄 Export to PDF
               </button>
             </div>
@@ -966,276 +270,21 @@ function AmortizationCalculator() {
                     Compare how extra amortization payments reduce your loan balance over time.
                   </p>
                   
-                  <div className="line-chart">
-                    <svg viewBox="0 0 800 400" className="line-chart-svg">
-                      {/* Grid lines */}
-                      {[0, 1, 2, 3, 4].map(i => (
-                        <line
-                          key={`grid-${i}`}
-                          x1="60"
-                          y1={80 + i * 60}
-                          x2="780"
-                          y2={80 + i * 60}
-                          stroke="#e2e8f0"
-                          strokeWidth="1"
-                        />
-                      ))}
-                      
-                      {/* Y-axis labels */}
-                      {(() => {
-                        const maxBalance = parseFloat(loanAmount) || 100000
-                        return [0, 1, 2, 3, 4].map(i => {
-                          const value = maxBalance - (i * maxBalance / 4)
-                          return (
-                            <text
-                              key={`ylabel-${i}`}
-                              x="50"
-                              y={80 + i * 60 + 5}
-                              textAnchor="end"
-                              fontSize="12"
-                              fill="#718096"
-                            >
-                              {Math.round(value / 1000)}k€
-                            </text>
-                          )
-                        })
-                      })()}
-                      
-                      {/* X-axis labels (years) */}
-                      {(() => {
-                        const totalMonths = scheduleWithoutExtra.length
-                        const years = Math.ceil(totalMonths / 12)
-                        const step = years <= 10 ? 1 : Math.ceil(years / 10)
-                        return Array.from({ length: Math.min(11, Math.ceil(years / step) + 1) }, (_, i) => {
-                          const year = i * step
-                          const x = 60 + (year * 12 / totalMonths) * 720
-                          return x <= 780 ? (
-                            <text
-                              key={`xlabel-${i}`}
-                              x={x}
-                              y="330"
-                              textAnchor="middle"
-                              fontSize="12"
-                              fill="#718096"
-                            >
-                              {year}y
-                            </text>
-                          ) : null
-                        })
-                      })()}
-                      
-                      {/* Line without extra amortization */}
-                      {(() => {
-                        const maxBalance = parseFloat(loanAmount) || 100000
-                        const points = scheduleWithoutExtra
-                          .filter((_, i) => i % Math.max(1, Math.floor(scheduleWithoutExtra.length / 100)) === 0)
-                          .map((row, i, arr) => {
-                            const x = 60 + (row.month / scheduleWithoutExtra.length) * 720
-                            const y = 320 - (row.balance / maxBalance) * 240
-                            return `${x},${y}`
-                          })
-                          .join(' ')
-                        return (
-                          <polyline
-                            points={points}
-                            fill="none"
-                            stroke="#fc8181"
-                            strokeWidth="2"
-                            opacity="0.8"
-                          />
-                        )
-                      })()}
-                      
-                      {/* Line with extra amortization */}
-                      {(() => {
-                        const maxBalance = parseFloat(loanAmount) || 100000
-                        const dataPoints = amortizationSchedule.filter(row => !row.isYearlySummary)
-                        const points = dataPoints
-                          .filter((_, i) => i % Math.max(1, Math.floor(dataPoints.length / 100)) === 0)
-                          .map((row) => {
-                            const monthNumber = (row.year - 1) * 12 + row.month
-                            const x = 60 + (monthNumber / scheduleWithoutExtra.length) * 720
-                            const y = 320 - (row.balance / maxBalance) * 240
-                            return `${x},${y}`
-                          })
-                          .join(' ')
-                        return (
-                          <polyline
-                            points={points}
-                            fill="none"
-                            stroke="#667eea"
-                            strokeWidth="3"
-                          />
-                        )
-                      })()}
-                      
-                      {/* Legend */}
-                      <line x1="600" y1="30" x2="640" y2="30" stroke="#fc8181" strokeWidth="2" opacity="0.8" />
-                      <text x="645" y="35" fontSize="14" fill="#4a5568">Without Extra Payments</text>
-                      
-                      <line x1="600" y1="55" x2="640" y2="55" stroke="#667eea" strokeWidth="3" />
-                      <text x="645" y="60" fontSize="14" fill="#4a5568">With Extra Payments</text>
-                    </svg>
-                  </div>
+                  <BalanceComparisonChart
+                    loanAmount={loanAmount}
+                    scheduleWithoutExtra={scheduleWithoutExtra}
+                    amortizationSchedule={amortizationSchedule}
+                  />
 
-                  {/* Comparison Pie Charts */}
-                  <div className="comparison-pies">
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2d3748', marginBottom: '1.5rem', marginTop: '2rem' }}>
-                      Total Payment Breakdown
-                    </h3>
-                    <div className="pies-container">
-                      {/* Without Extra Amortization */}
-                      {(() => {
-                        const principal = parseFloat(loanAmount) || 0
-                        const life = parseFloat(lifeInsurance) || 0
-                        const house = parseFloat(houseInsurance) || 0
-                        const monthlyInsurance = life + house
-                        const totalInterest = scheduleWithoutExtra.reduce((sum, row) => {
-                          const balance = row.month === 1 ? principal : scheduleWithoutExtra[row.month - 2].balance
-                          const monthlyRate = (parseFloat(euribor) + parseFloat(spread)) / 12 / 100
-                          return sum + (balance * monthlyRate)
-                        }, 0)
-                        const totalInsurance = monthlyInsurance * scheduleWithoutExtra.length
-                        const total = principal + totalInterest + totalInsurance
-                        const principalPercent = (principal / total * 100).toFixed(1)
-                        const interestPercent = (totalInterest / total * 100).toFixed(1)
-                        const insurancePercent = (totalInsurance / total * 100).toFixed(1)
-                        
-                        const principalDegrees = (principal / total) * 360
-                        const interestDegrees = principalDegrees + (totalInterest / total) * 360
-                        
-                        return (
-                          <div className="pie-comparison-item">
-                            <h4>Without Extra Payments</h4>
-                            <div className="pie-chart-mini">
-                              <div 
-                                className="pie-chart-mini-inner"
-                                style={{
-                                  background: totalInsurance > 0 ? `conic-gradient(
-                                    #667eea 0deg ${principalDegrees}deg,
-                                    #fc8181 ${principalDegrees}deg ${interestDegrees}deg,
-                                    #f6ad55 ${interestDegrees}deg 360deg
-                                  )` : `conic-gradient(
-                                    #667eea 0deg ${principalDegrees}deg,
-                                    #fc8181 ${principalDegrees}deg 360deg
-                                  )`
-                                }}
-                              >
-                                <div className="pie-chart-center-mini">
-                                  <div className="pie-chart-total-mini">Total Paid</div>
-                                  <div className="pie-chart-amount-mini">€{total.toLocaleString('pt-PT', { maximumFractionDigits: 0 })}</div>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="pie-legend-mini">
-                              <div className="legend-item-mini">
-                                <span className="legend-color-mini" style={{ background: '#667eea' }}></span>
-                                <span className="legend-text-mini">Principal: €{principal.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({principalPercent}%)</span>
-                              </div>
-                              <div className="legend-item-mini">
-                                <span className="legend-color-mini" style={{ background: '#fc8181' }}></span>
-                                <span className="legend-text-mini">Interest: €{totalInterest.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({interestPercent}%)</span>
-                              </div>
-                              {totalInsurance > 0 && (
-                                <div className="legend-item-mini">
-                                  <span className="legend-color-mini" style={{ background: '#f6ad55' }}></span>
-                                  <span className="legend-text-mini">Insurance: €{totalInsurance.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({insurancePercent}%)</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })()}
-
-                      {/* With Extra Amortization */}
-                      {(() => {
-                        const dataPoints = amortizationSchedule.filter(row => !row.isYearlySummary)
-                        const loanPrincipal = parseFloat(loanAmount) || 0
-                        const totalInterest = dataPoints.reduce((sum, row) => sum + row.interest, 0)
-                        const totalInsurance = dataPoints.reduce((sum, row) => sum + row.insurance, 0)
-                        const totalExtra = dataPoints.reduce((sum, row) => sum + row.extraAmortization, 0)
-                        const totalPrincipalPaid = dataPoints.reduce((sum, row) => sum + row.principal, 0)
-                        const totalPayments = dataPoints.reduce((sum, row) => sum + row.totalPayment, 0)
-                        const regularPrincipal = totalPrincipalPaid
-                        const total = totalPayments
-                        const regularPrincipalPercent = (regularPrincipal / total * 100).toFixed(1)
-                        const extraPercent = (totalExtra / total * 100).toFixed(1)
-                        const interestPercent = (totalInterest / total * 100).toFixed(1)
-                        const insurancePercent = totalInsurance > 0 ? (totalInsurance / total * 100).toFixed(1) : 0
-                        
-                        const regularPrincipalDegrees = (regularPrincipal / total) * 360
-                        const extraDegrees = regularPrincipalDegrees + (totalExtra / total) * 360
-                        const interestDegrees = extraDegrees + (totalInterest / total) * 360
-                        const insuranceDegrees = interestDegrees + (totalInsurance / total) * 360
-                        
-                        return (
-                          <div className="pie-comparison-item">
-                            <h4>With Extra Payments</h4>
-                            <div className="pie-chart-mini">
-                              <div 
-                                className="pie-chart-mini-inner"
-                                style={{
-                                  background: totalInsurance > 0 && totalExtra > 0 ? `conic-gradient(
-                                    #667eea 0deg ${regularPrincipalDegrees}deg,
-                                    #48bb78 ${regularPrincipalDegrees}deg ${extraDegrees}deg,
-                                    #fc8181 ${extraDegrees}deg ${interestDegrees}deg,
-                                    #f6ad55 ${interestDegrees}deg 360deg
-                                  )` : totalExtra > 0 ? `conic-gradient(
-                                    #667eea 0deg ${regularPrincipalDegrees}deg,
-                                    #48bb78 ${regularPrincipalDegrees}deg ${extraDegrees}deg,
-                                    #fc8181 ${extraDegrees}deg 360deg
-                                  )` : totalInsurance > 0 ? `conic-gradient(
-                                    #667eea 0deg ${regularPrincipalDegrees}deg,
-                                    #fc8181 ${regularPrincipalDegrees}deg ${interestDegrees}deg,
-                                    #f6ad55 ${interestDegrees}deg 360deg
-                                  )` : `conic-gradient(
-                                    #667eea 0deg ${regularPrincipalDegrees}deg,
-                                    #fc8181 ${regularPrincipalDegrees}deg 360deg
-                                  )`
-                                }}
-                              >
-                                <div className="pie-chart-center-mini">
-                                  <div className="pie-chart-total-mini">Total Paid</div>
-                                  <div className="pie-chart-amount-mini">€{total.toLocaleString('pt-PT', { maximumFractionDigits: 0 })}</div>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="pie-legend-mini">
-                              <div className="legend-item-mini">
-                                <span className="legend-color-mini" style={{ background: '#667eea' }}></span>
-                                <span className="legend-text-mini">Principal: €{regularPrincipal.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({regularPrincipalPercent}%)</span>
-                              </div>
-                              {totalExtra > 0 && (
-                                <div className="legend-item-mini">
-                                  <span className="legend-color-mini" style={{ background: '#48bb78' }}></span>
-                                  <span className="legend-text-mini">Extra Payments: €{totalExtra.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({extraPercent}%)</span>
-                                </div>
-                              )}
-                              <div className="legend-item-mini">
-                                <span className="legend-color-mini" style={{ background: '#fc8181' }}></span>
-                                <span className="legend-text-mini">Interest: €{totalInterest.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({interestPercent}%)</span>
-                              </div>
-                              {totalInsurance > 0 && (
-                                <div className="legend-item-mini">
-                                  <span className="legend-color-mini" style={{ background: '#f6ad55' }}></span>
-                                  <span className="legend-text-mini">Insurance: €{totalInsurance.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} ({insurancePercent}%)</span>
-                                </div>
-                              )}
-                              {totalExtra > 0 && (
-                                <div className="legend-item-mini" style={{ fontSize: '0.75rem', color: '#718096', fontStyle: 'italic', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #e2e8f0' }}>
-                                  💡 Saves €{(scheduleWithoutExtra.reduce((sum, row) => {
-                                    const balance = row.month === 1 ? loanPrincipal : scheduleWithoutExtra[row.month - 2].balance
-                                    const monthlyRate = (parseFloat(euribor) + parseFloat(spread)) / 12 / 100
-                                    return sum + (balance * monthlyRate)
-                                  }, 0) - totalInterest).toLocaleString('pt-PT', { maximumFractionDigits: 0 })} in interest compared to no extra payments
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })()}
-                    </div>
-                  </div>
+                  <ComparisonPieCharts
+                    loanAmount={loanAmount}
+                    scheduleWithoutExtra={scheduleWithoutExtra}
+                    amortizationSchedule={amortizationSchedule}
+                    euribor={euribor}
+                    spread={spread}
+                    lifeInsurance={lifeInsurance}
+                    houseInsurance={houseInsurance}
+                  />
                 </div>
               )}
             </div>
@@ -1276,40 +325,19 @@ function AmortizationCalculator() {
                         <tr key={`${row.month}-${index}`} className={row.isYearlySummary ? 'yearly-summary' : ''}>
                           <td>{row.year}</td>
                           <td>{row.month}</td>
-                          <td>€{row.principal.toLocaleString('pt-PT', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}</td>
-                          <td>€{row.interest.toLocaleString('pt-PT', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}</td>
+                          <td>€{row.principal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td>€{row.interest.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
-                            <td>€{row.insurance.toLocaleString('pt-PT', { 
-                              minimumFractionDigits: 2, 
-                              maximumFractionDigits: 2 
-                            })}</td>
+                            <td>€{row.insurance.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           )}
-                          <td>€{row.basePayment.toLocaleString('pt-PT', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}</td>
+                          <td>€{row.basePayment.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           {amortizationRules.length > 0 && (
                             <td style={{ color: row.extraAmortization > 0 ? '#38a169' : '#4a5568', fontWeight: row.extraAmortization > 0 ? '600' : 'normal' }}>
-                              €{row.extraAmortization.toLocaleString('pt-PT', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                              })}
+                              €{row.extraAmortization.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </td>
                           )}
-                          <td>€{row.totalPayment.toLocaleString('pt-PT', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}</td>
-                          <td>€{row.balance.toLocaleString('pt-PT', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}</td>
+                          <td>€{row.totalPayment.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td>€{row.balance.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1320,59 +348,41 @@ function AmortizationCalculator() {
                           €{amortizationSchedule
                             .filter(row => !row.isYearlySummary)
                             .reduce((sum, row) => sum + row.principal, 0)
-                            .toLocaleString('pt-PT', { 
-                              minimumFractionDigits: 2, 
-                              maximumFractionDigits: 2 
-                            })}
+                            .toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td style={{ fontWeight: '700' }}>
                           €{amortizationSchedule
                             .filter(row => !row.isYearlySummary)
                             .reduce((sum, row) => sum + row.interest, 0)
-                            .toLocaleString('pt-PT', { 
-                              minimumFractionDigits: 2, 
-                              maximumFractionDigits: 2 
-                            })}
+                            .toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
                           <td style={{ fontWeight: '700' }}>
                             €{amortizationSchedule
                               .filter(row => !row.isYearlySummary)
                               .reduce((sum, row) => sum + row.insurance, 0)
-                              .toLocaleString('pt-PT', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                              })}
+                              .toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                         )}
                         <td style={{ fontWeight: '700' }}>
                           €{amortizationSchedule
                             .filter(row => !row.isYearlySummary)
                             .reduce((sum, row) => sum + row.basePayment, 0)
-                            .toLocaleString('pt-PT', { 
-                              minimumFractionDigits: 2, 
-                              maximumFractionDigits: 2 
-                            })}
+                            .toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         {amortizationRules.length > 0 && (
                           <td style={{ fontWeight: '700', color: '#38a169' }}>
                             €{amortizationSchedule
                               .filter(row => !row.isYearlySummary)
                               .reduce((sum, row) => sum + row.extraAmortization, 0)
-                              .toLocaleString('pt-PT', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                              })}
+                              .toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                         )}
                         <td style={{ fontWeight: '700' }}>
                           €{amortizationSchedule
                             .filter(row => !row.isYearlySummary)
                             .reduce((sum, row) => sum + row.totalPayment, 0)
-                            .toLocaleString('pt-PT', { 
-                              minimumFractionDigits: 2, 
-                              maximumFractionDigits: 2 
-                            })}
+                            .toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td style={{ fontWeight: '700' }}>—</td>
                       </tr>
@@ -1400,4 +410,3 @@ function AmortizationCalculator() {
 }
 
 export default AmortizationCalculator
-

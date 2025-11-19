@@ -1,29 +1,25 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './Calculator.css'
+import { useLocalStorage } from './hooks/useLocalStorage'
+import { calculateMonthlyPayment } from './utils/calculations'
+import BasicInfoForm from './components/BasicInfoForm'
+import InsuranceForm from './components/InsuranceForm'
 
 function PaymentCalculator() {
-  // Load from localStorage or use empty string
-  const [loanAmount, setLoanAmount] = useState(() => localStorage.getItem('loanAmount') || '')
-  const [months, setMonths] = useState(() => localStorage.getItem('months') || '')
-  const [euribor, setEuribor] = useState(() => localStorage.getItem('euribor') || '')
-  const [spread, setSpread] = useState(() => localStorage.getItem('spread') || '')
-  const [lifeInsurance, setLifeInsurance] = useState(() => localStorage.getItem('lifeInsurance') || '')
-  const [houseInsurance, setHouseInsurance] = useState(() => localStorage.getItem('houseInsurance') || '')
+  // Form state with localStorage persistence
+  const [loanAmount, setLoanAmount] = useLocalStorage('loanAmount', '')
+  const [months, setMonths] = useLocalStorage('months', '')
+  const [euribor, setEuribor] = useLocalStorage('euribor', '')
+  const [spread, setSpread] = useLocalStorage('spread', '')
+  const [lifeInsurance, setLifeInsurance] = useLocalStorage('lifeInsurance', '')
+  const [houseInsurance, setHouseInsurance] = useLocalStorage('houseInsurance', '')
+
+  // UI state
   const [monthlyPayment, setMonthlyPayment] = useState(null)
   const [amortizationSchedule, setAmortizationSchedule] = useState([])
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
   const [isInsuranceExpanded, setIsInsuranceExpanded] = useState(false)
   const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(true)
-
-  // Save to localStorage whenever values change
-  useEffect(() => {
-    localStorage.setItem('loanAmount', loanAmount)
-    localStorage.setItem('months', months)
-    localStorage.setItem('euribor', euribor)
-    localStorage.setItem('spread', spread)
-    localStorage.setItem('lifeInsurance', lifeInsurance)
-    localStorage.setItem('houseInsurance', houseInsurance)
-  }, [loanAmount, months, euribor, spread, lifeInsurance, houseInsurance])
 
   const calculateMortgage = () => {
     const principal = parseFloat(loanAmount)
@@ -39,19 +35,10 @@ function PaymentCalculator() {
       return
     }
 
-    // Calculate monthly interest rate
+    // Calculate monthly interest rate and payment
     const annualRate = euriborRate + spreadRate
     const monthlyRate = annualRate / 12 / 100
-
-    // Calculate monthly payment using the mortgage formula
-    // M = P * [r(1 + r)^n] / [(1 + r)^n - 1]
-    let payment
-    if (monthlyRate === 0) {
-      payment = principal / numberOfMonths
-    } else {
-      const x = Math.pow(1 + monthlyRate, numberOfMonths)
-      payment = (principal * monthlyRate * x) / (x - 1)
-    }
+    const payment = calculateMonthlyPayment(principal, monthlyRate, numberOfMonths)
 
     // Total insurance per month
     const totalInsurance = life + house
@@ -71,7 +58,6 @@ function PaymentCalculator() {
       const principalPayment = payment - interestPayment
       remainingBalance -= principalPayment
 
-      // Calculate month within the year (1-12)
       const monthInYear = ((i - 1) % 12) + 1
       const yearNumber = Math.floor((i - 1) / 12) + 1
 
@@ -90,18 +76,18 @@ function PaymentCalculator() {
 
       schedule.push(monthData)
 
-      // Accumulate yearly totals
       yearlyPrincipal += principalPayment
       yearlyInterest += interestPayment
       yearlyInsurance += totalInsurance
       yearlyTotal += payment + totalInsurance
 
-      // Add yearly summary row after every 12 months
+      // Add yearly summary row
       if (i % 12 === 0) {
-        const yearNum = i / 12
         schedule.push({
           month: 'Total',
-          year: yearNum,
+          year: i / 12,
+          absoluteMonth: i,
+          payment: payment,
           principal: yearlyPrincipal,
           interest: yearlyInterest,
           insurance: yearlyInsurance,
@@ -109,8 +95,6 @@ function PaymentCalculator() {
           balance: Math.max(0, remainingBalance),
           isYearlySummary: true
         })
-
-        // Reset yearly accumulators
         yearlyPrincipal = 0
         yearlyInterest = 0
         yearlyInsurance = 0
@@ -118,12 +102,14 @@ function PaymentCalculator() {
       }
     }
 
-    // Add final year summary if there are remaining months (not a full year)
+    // Add final year summary if not a full year
     if (numberOfMonths % 12 !== 0 && yearlyTotal > 0) {
       const finalYear = Math.floor(numberOfMonths / 12) + 1
       schedule.push({
         month: 'Total',
         year: finalYear,
+        absoluteMonth: numberOfMonths,
+        payment: payment,
         principal: yearlyPrincipal,
         interest: yearlyInterest,
         insurance: yearlyInsurance,
@@ -147,144 +133,55 @@ function PaymentCalculator() {
     setAmortizationSchedule([])
   }
 
+  const totalInterest = amortizationSchedule.length > 0
+    ? amortizationSchedule
+        .filter(row => !row.isYearlySummary)
+        .reduce((sum, row) => sum + row.interest, 0)
+    : 0
+
+  const grandTotal = amortizationSchedule.length > 0
+    ? parseFloat(loanAmount) + totalInterest + (amortizationSchedule.filter(row => !row.isYearlySummary).reduce((sum, row) => sum + row.insurance, 0))
+    : 0
+
   return (
     <div className="app">
       <div className="container">
         <header>
-          <h1>🏠 Monthly Payment Calculator</h1>
-          <p className="subtitle">Calculate your monthly mortgage payment</p>
+          <h1>🏠 Mortgage Calculator</h1>
+          <p className="subtitle">Calculate your monthly mortgage payments</p>
         </header>
 
         <div className="calculator-card">
-          {/* Basic Section */}
-          <div className="section">
-            <h2 className="section-title">📋 Basic Information</h2>
-            
-            <div className="input-group">
-              <label htmlFor="loanAmount">
-                <span className="label-text">Loan Amount</span>
-                <span className="label-unit">€</span>
-              </label>
-              <input
-                id="loanAmount"
-                type="number"
-                value={loanAmount}
-                onChange={(e) => setLoanAmount(e.target.value)}
-                placeholder="250000"
-                min="0"
-                step="1000"
-              />
-            </div>
+          <BasicInfoForm
+            loanAmount={loanAmount}
+            setLoanAmount={setLoanAmount}
+            months={months}
+            setMonths={setMonths}
+            euribor={euribor}
+            setEuribor={setEuribor}
+            spread={spread}
+            setSpread={setSpread}
+          />
 
-            <div className="input-group">
-              <label htmlFor="months">
-                <span className="label-text">Loan Term</span>
-                <span className="label-unit">months</span>
-              </label>
-              <input
-                id="months"
-                type="number"
-                value={months}
-                onChange={(e) => setMonths(e.target.value)}
-                placeholder="360"
-                min="1"
-                step="1"
-              />
-            </div>
-
-            <div className="input-row">
-              <div className="input-group">
-                <label htmlFor="euribor">
-                  <span className="label-text">Euribor Rate</span>
-                  <span className="label-unit">%</span>
-                </label>
-                <input
-                  id="euribor"
-                  type="number"
-                  value={euribor}
-                  onChange={(e) => setEuribor(e.target.value)}
-                  placeholder="3.5"
-                  min="0"
-                  step="0.01"
-                />
-                <span className="input-hint">💡 Euribor rates change frequently.</span>
-              </div>
-
-              <div className="input-group">
-                <label htmlFor="spread">
-                  <span className="label-text">Spread</span>
-                  <span className="label-unit">%</span>
-                </label>
-                <input
-                  id="spread"
-                  type="number"
-                  value={spread}
-                  onChange={(e) => setSpread(e.target.value)}
-                  placeholder="1.0"
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Insurance Section */}
-          <div className="section">
-            <h2 
-              className="section-title collapsible" 
-              onClick={() => setIsInsuranceExpanded(!isInsuranceExpanded)}
-            >
-              🛡️ Insurance (Optional)
-              <span className="collapse-icon">{isInsuranceExpanded ? '▼' : '▶'}</span>
-            </h2>
-            
-            {isInsuranceExpanded && (
-              <div className="input-row">
-                <div className="input-group">
-                  <label htmlFor="lifeInsurance">
-                    <span className="label-text">Life Insurance</span>
-                    <span className="label-unit">€/month</span>
-                  </label>
-                  <input
-                    id="lifeInsurance"
-                    type="number"
-                    value={lifeInsurance}
-                    onChange={(e) => setLifeInsurance(e.target.value)}
-                    placeholder="0"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-
-                <div className="input-group">
-                  <label htmlFor="houseInsurance">
-                    <span className="label-text">House Insurance</span>
-                    <span className="label-unit">€/month</span>
-                  </label>
-                  <input
-                    id="houseInsurance"
-                    type="number"
-                    value={houseInsurance}
-                    onChange={(e) => setHouseInsurance(e.target.value)}
-                    placeholder="0"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          <InsuranceForm
+            lifeInsurance={lifeInsurance}
+            setLifeInsurance={setLifeInsurance}
+            houseInsurance={houseInsurance}
+            setHouseInsurance={setHouseInsurance}
+            isExpanded={isInsuranceExpanded}
+            setIsExpanded={setIsInsuranceExpanded}
+          />
 
           <div className="button-group">
             <button className="calculate-btn" onClick={calculateMortgage}>
-              Calculate Payment
+              Calculate
             </button>
             <button className="reset-btn" onClick={resetCalculator}>
               Reset
             </button>
           </div>
 
-          {monthlyPayment !== null && (
+          {monthlyPayment && (
             <div className="result-card">
               <div className="result-label">Monthly Payment</div>
               <div className="result-amount">
@@ -295,28 +192,30 @@ function PaymentCalculator() {
               </div>
               <div className="result-details">
                 <div className="detail-item">
+                  <span>Loan Amount:</span>
+                  <span>€{parseFloat(loanAmount).toLocaleString('pt-PT', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  })}</span>
+                </div>
+                <div className="detail-item">
+                  <span>Loan Term:</span>
+                  <span>{months} months ({(parseInt(months) / 12).toFixed(1)} years)</span>
+                </div>
+                <div className="detail-item">
                   <span>Total Interest Rate:</span>
                   <span>{(parseFloat(euribor || 0) + parseFloat(spread || 0)).toFixed(2)}%</span>
                 </div>
-                {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
-                  <div className="detail-item">
-                    <span>Monthly Insurance:</span>
-                    <span>€{((parseFloat(lifeInsurance) || 0) + (parseFloat(houseInsurance) || 0)).toLocaleString('pt-PT', { 
-                      minimumFractionDigits: 2, 
-                      maximumFractionDigits: 2 
-                    })}</span>
-                  </div>
-                )}
                 <div className="detail-item">
                   <span>Total Amount Paid:</span>
-                  <span>€{(monthlyPayment * parseInt(months || 0)).toLocaleString('pt-PT', { 
+                  <span>€{(monthlyPayment * parseInt(months)).toLocaleString('pt-PT', { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
                 </div>
                 <div className="detail-item">
                   <span>Total Interest:</span>
-                  <span>€{((monthlyPayment * parseInt(months || 0)) - parseFloat(loanAmount || 0) - ((parseFloat(lifeInsurance) || 0) + (parseFloat(houseInsurance) || 0)) * parseInt(months || 0)).toLocaleString('pt-PT', { 
+                  <span>€{totalInterest.toLocaleString('pt-PT', { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
@@ -325,28 +224,28 @@ function PaymentCalculator() {
             </div>
           )}
 
-          {/* Payment Breakdown Chart */}
-          {amortizationSchedule.length > 0 && (
-            <div className="section amortization-section">
+          {amortizationSchedule.length > 0 && grandTotal > 0 && (
+            <div className="section">
               <h2 
                 className="section-title collapsible" 
                 onClick={() => setIsBreakdownExpanded(!isBreakdownExpanded)}
               >
-                📈 Payment Breakdown
+                💰 Payment Breakdown
                 <span className="collapse-icon">{isBreakdownExpanded ? '▼' : '▶'}</span>
               </h2>
               
               {isBreakdownExpanded && (() => {
-                // Calculate totals from schedule
-                const totalPrincipal = parseFloat(loanAmount)
-                const totalInterest = (monthlyPayment * parseInt(months)) - totalPrincipal - ((parseFloat(lifeInsurance) || 0) + (parseFloat(houseInsurance) || 0)) * parseInt(months)
-                const totalInsurance = ((parseFloat(lifeInsurance) || 0) + (parseFloat(houseInsurance) || 0)) * parseInt(months)
-                const grandTotal = totalPrincipal + totalInterest + totalInsurance
+                const principal = parseFloat(loanAmount) || 0
+                const life = parseFloat(lifeInsurance) || 0
+                const house = parseFloat(houseInsurance) || 0
+                const totalInsurance = (life + house) * amortizationSchedule.filter(row => !row.isYearlySummary).length
                 
-                // Calculate percentages
-                const principalPercent = (totalPrincipal / grandTotal) * 100
-                const interestPercent = (totalInterest / grandTotal) * 100
-                const insurancePercent = (totalInsurance / grandTotal) * 100
+                const principalPercent = (principal / grandTotal * 100).toFixed(1)
+                const interestPercent = (totalInterest / grandTotal * 100).toFixed(1)
+                const insurancePercent = totalInsurance > 0 ? (totalInsurance / grandTotal * 100).toFixed(1) : 0
+                
+                const principalDegrees = (principal / grandTotal) * 360
+                const interestDegrees = principalDegrees + (totalInterest / grandTotal) * 360
                 
                 return (
                   <div className="chart-container">
@@ -357,14 +256,14 @@ function PaymentCalculator() {
                           background: totalInsurance > 0 
                             ? `conic-gradient(
                                 from 0deg,
-                                #667eea 0deg ${principalPercent * 3.6}deg,
-                                #f093fb ${principalPercent * 3.6}deg ${(principalPercent + interestPercent) * 3.6}deg,
-                                #4facfe ${(principalPercent + interestPercent) * 3.6}deg 360deg
+                                #667eea 0deg ${principalDegrees}deg,
+                                #f093fb ${principalDegrees}deg ${interestDegrees}deg,
+                                #4facfe ${interestDegrees}deg 360deg
                               )`
                             : `conic-gradient(
                                 from 0deg,
-                                #667eea 0deg ${principalPercent * 3.6}deg,
-                                #f093fb ${principalPercent * 3.6}deg 360deg
+                                #667eea 0deg ${principalDegrees}deg,
+                                #f093fb ${principalDegrees}deg 360deg
                               )`
                         }}
                       >
@@ -381,45 +280,39 @@ function PaymentCalculator() {
                       
                       <div className="chart-legend">
                         <div className="legend-item">
-                          <span className="legend-color" style={{ backgroundColor: '#667eea' }}></span>
+                          <div className="legend-color" style={{ background: '#667eea' }}></div>
                           <div className="legend-details">
-                            <span className="legend-label">Principal</span>
-                            <span className="legend-value">
-                              €{totalPrincipal.toLocaleString('pt-PT', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                              })}
-                            </span>
-                            <span className="legend-percent">{principalPercent.toFixed(1)}%</span>
+                            <div className="legend-label">Principal</div>
+                            <div className="legend-value">€{principal.toLocaleString('pt-PT', { 
+                              minimumFractionDigits: 0, 
+                              maximumFractionDigits: 0 
+                            })}</div>
+                            <div className="legend-percent">({principalPercent}%)</div>
                           </div>
                         </div>
                         
                         <div className="legend-item">
-                          <span className="legend-color" style={{ backgroundColor: '#f093fb' }}></span>
+                          <div className="legend-color" style={{ background: '#f093fb' }}></div>
                           <div className="legend-details">
-                            <span className="legend-label">Interest</span>
-                            <span className="legend-value">
-                              €{totalInterest.toLocaleString('pt-PT', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                              })}
-                            </span>
-                            <span className="legend-percent">{interestPercent.toFixed(1)}%</span>
+                            <div className="legend-label">Interest</div>
+                            <div className="legend-value">€{totalInterest.toLocaleString('pt-PT', { 
+                              minimumFractionDigits: 0, 
+                              maximumFractionDigits: 0 
+                            })}</div>
+                            <div className="legend-percent">({interestPercent}%)</div>
                           </div>
                         </div>
                         
                         {totalInsurance > 0 && (
                           <div className="legend-item">
-                            <span className="legend-color" style={{ backgroundColor: '#4facfe' }}></span>
+                            <div className="legend-color" style={{ background: '#4facfe' }}></div>
                             <div className="legend-details">
-                              <span className="legend-label">Insurance</span>
-                              <span className="legend-value">
-                                €{totalInsurance.toLocaleString('pt-PT', { 
-                                  minimumFractionDigits: 2, 
-                                  maximumFractionDigits: 2 
-                                })}
-                              </span>
-                              <span className="legend-percent">{insurancePercent.toFixed(1)}%</span>
+                              <div className="legend-label">Insurance</div>
+                              <div className="legend-value">€{totalInsurance.toLocaleString('pt-PT', { 
+                                minimumFractionDigits: 0, 
+                                maximumFractionDigits: 0 
+                              })}</div>
+                              <div className="legend-percent">({insurancePercent}%)</div>
                             </div>
                           </div>
                         )}
@@ -431,14 +324,13 @@ function PaymentCalculator() {
             </div>
           )}
 
-          {/* Payment Schedule Section */}
           {amortizationSchedule.length > 0 && (
-            <div className="section amortization-section">
+            <div className="section">
               <h2 
                 className="section-title collapsible" 
                 onClick={() => setIsScheduleExpanded(!isScheduleExpanded)}
               >
-                📊 Payment Schedule
+                📋 Payment Schedule
                 <span className="collapse-icon">{isScheduleExpanded ? '▼' : '▶'}</span>
               </h2>
 
@@ -494,11 +386,9 @@ function PaymentCalculator() {
             </div>
           )}
         </div>
-
       </div>
     </div>
   )
 }
 
 export default PaymentCalculator
-
