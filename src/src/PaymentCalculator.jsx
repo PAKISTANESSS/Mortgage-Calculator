@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './Calculator.css'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { useLanguage } from './hooks/useLanguage'
@@ -12,8 +12,10 @@ import {
   calculateGrandTotal,
   calculatePieChartData
 } from './utils/calculations'
+import { getDataFromURL } from './utils/urlSharing'
 import BasicInfoForm from './components/BasicInfoForm'
 import InsuranceForm from './components/InsuranceForm'
+import ShareButton from './components/ShareButton'
 
 function PaymentCalculator() {
   const { t, locale } = useLanguage()
@@ -31,6 +33,28 @@ function PaymentCalculator() {
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
   const [isInsuranceExpanded, setIsInsuranceExpanded] = useState(false)
   const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(true)
+
+  const calculateButtonRef = useRef(null)
+
+  // Load data from URL on mount and auto-calculate
+  useEffect(() => {
+    const urlData = getDataFromURL()
+    if (urlData) {
+      if (urlData.loanAmount !== undefined) setLoanAmount(urlData.loanAmount)
+      if (urlData.months !== undefined) setMonths(urlData.months)
+      if (urlData.euribor !== undefined) setEuribor(urlData.euribor)
+      if (urlData.spread !== undefined) setSpread(urlData.spread)
+      if (urlData.lifeInsurance !== undefined) setLifeInsurance(urlData.lifeInsurance)
+      if (urlData.houseInsurance !== undefined) setHouseInsurance(urlData.houseInsurance)
+      
+      // Auto-calculate by triggering button click after data is loaded
+      if (calculateButtonRef.current) {
+        setTimeout(() => {
+          calculateButtonRef.current.click()
+        }, 100)
+      }
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const calculateMortgage = () => {
     const principal = parseFloat(loanAmount)
@@ -115,12 +139,23 @@ function PaymentCalculator() {
           />
 
           <div className="button-group">
-            <button className="calculate-btn" onClick={calculateMortgage}>
+            <button ref={calculateButtonRef} className="calculate-btn" onClick={calculateMortgage}>
               {t.calculate}
             </button>
             <button className="reset-btn" onClick={resetCalculator}>
               {t.reset}
             </button>
+            <ShareButton 
+              path="/" 
+              data={{
+                loanAmount,
+                months,
+                euribor,
+                spread,
+                lifeInsurance,
+                houseInsurance
+              }}
+            />
           </div>
 
           {monthlyPayment && (

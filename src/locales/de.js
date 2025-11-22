@@ -12,6 +12,9 @@ export default {
   exportSubtitle: 'Dies kann bei großen Berichten einen Moment dauern',
   validationError: 'Bitte füllen Sie alle Felder mit gültigen Zahlen aus',
   pdfFilename: 'tilgungsplan',
+  shareLink: 'Link Teilen',
+  linkCopied: 'Link Kopiert!',
+  shareCalculation: 'Diese Berechnung teilen',
   
   // Basic Info
   basicInfo: 'Grundinformationen',

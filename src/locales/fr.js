@@ -12,6 +12,9 @@ export default {
   exportSubtitle: 'Cela peut prendre un moment pour les grands rapports',
   validationError: 'Veuillez remplir tous les champs avec des nombres valides',
   pdfFilename: 'plan-amortissement',
+  shareLink: 'Partager le Lien',
+  linkCopied: 'Lien Copié!',
+  shareCalculation: 'Partager ce calcul',
   
   // Basic Info
   basicInfo: 'Informations de Base',

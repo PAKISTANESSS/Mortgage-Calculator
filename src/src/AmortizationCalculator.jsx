@@ -12,11 +12,13 @@ import {
   calculateAveragePayments
 } from './utils/calculations'
 import { exportReportToPDF } from './utils/pdfExport'
+import { getDataFromURL } from './utils/urlSharing'
 import BasicInfoForm from './components/BasicInfoForm'
 import InsuranceForm from './components/InsuranceForm'
 import AmortizationRules from './components/AmortizationRules'
 import BalanceComparisonChart from './components/BalanceComparisonChart'
 import ComparisonPieCharts from './components/ComparisonPieCharts'
+import ShareButton from './components/ShareButton'
 
 function AmortizationCalculator() {
   const { t, locale } = useLanguage()
@@ -41,6 +43,29 @@ function AmortizationCalculator() {
   const [isExporting, setIsExporting] = useState(false)
 
   const exportRef = useRef()
+  const calculateButtonRef = useRef(null)
+
+  // Load data from URL on mount and auto-calculate
+  useEffect(() => {
+    const urlData = getDataFromURL()
+    if (urlData) {
+      if (urlData.loanAmount !== undefined) setLoanAmount(urlData.loanAmount)
+      if (urlData.months !== undefined) setMonths(urlData.months)
+      if (urlData.euribor !== undefined) setEuribor(urlData.euribor)
+      if (urlData.spread !== undefined) setSpread(urlData.spread)
+      if (urlData.lifeInsurance !== undefined) setLifeInsurance(urlData.lifeInsurance)
+      if (urlData.houseInsurance !== undefined) setHouseInsurance(urlData.houseInsurance)
+      if (urlData.amortizationRules !== undefined) setAmortizationRules(urlData.amortizationRules)
+      if (urlData.recalculatePayment !== undefined) setRecalculatePayment(urlData.recalculatePayment)
+      
+      // Auto-calculate by triggering button click after data is loaded
+      if (calculateButtonRef.current) {
+        setTimeout(() => {
+          calculateButtonRef.current.click()
+        }, 100)
+      }
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Disable scrolling when exporting
   useEffect(() => {
@@ -162,7 +187,7 @@ function AmortizationCalculator() {
           />
 
           <div className="button-group">
-            <button className="calculate-btn" onClick={calculateAmortization}>
+            <button ref={calculateButtonRef} className="calculate-btn" onClick={calculateAmortization}>
               {t.amortizationCalc}
             </button>
             <button className="reset-btn" onClick={resetCalculator}>
@@ -236,10 +261,23 @@ function AmortizationCalculator() {
           )}
 
           {amortizationSchedule.length > 0 && (
-            <div style={{ textAlign: 'center', margin: '3rem 0 2.5rem 0' }}>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', margin: '3rem 0 2.5rem 0' }}>
               <button className="export-btn-inline" onClick={handleExportToPDF} title={t.exportPDF}>
                 📄 {t.exportPDF}
               </button>
+              <ShareButton 
+                path="/amortization" 
+                data={{
+                  loanAmount,
+                  months,
+                  euribor,
+                  spread,
+                  lifeInsurance,
+                  houseInsurance,
+                  amortizationRules,
+                  recalculatePayment
+                }}
+              />
             </div>
           )}
 

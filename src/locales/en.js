@@ -12,6 +12,9 @@ export default {
   exportSubtitle: 'This may take a moment for large reports',
   validationError: 'Please fill in all fields with valid numbers',
   pdfFilename: 'amortization-plan',
+  shareLink: 'Share Link',
+  linkCopied: 'Link Copied!',
+  shareCalculation: 'Share this calculation',
   
   // Basic Info
   basicInfo: 'Basic Information',
