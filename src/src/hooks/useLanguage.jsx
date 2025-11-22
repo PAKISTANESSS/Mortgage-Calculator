@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { locales, languages } from '../../locales'
@@ -35,7 +36,7 @@ export function LanguageProvider({ children }) {
 
 /**
  * Hook to use language context
- * @returns {Object} Language context with currentLanguage, setLanguage, t (translations), and languages
+ * @returns {Object} Language context with currentLanguage, setLanguage, t (translations), languages, and locale
  */
 export function useLanguage() {
   const context = useContext(LanguageContext)
@@ -44,6 +45,3 @@ export function useLanguage() {
   }
   return context
 }
-
-// Export languages for use in other components
-export { languages }
