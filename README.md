@@ -1,5 +1,7 @@
 # Mortgage Calculator
 
+[![CI - Build & Test](https://github.com/PAKISTANESSS/Mortage-Calculator/actions/workflows/ci.yml/badge.svg)](https://github.com/PAKISTANESSS/Mortage-Calculator/actions/workflows/ci.yml)
+
 A beautiful and modern React-based mortgage calculator that helps you calculate your monthly mortgage payments based on loan amount, term, Euribor rate, and spread.
 
 ## Features
