@@ -101,36 +101,86 @@ We love feature suggestions! Please create an issue with:
 ```
 src/
 ├── components/      # Reusable React components
-├── hooks/          # Custom React hooks
-├── utils/          # Utility functions
+├── hooks/          # Custom React hooks (useLanguage, useTheme, useLocalStorage)
+├── locales/        # Translation files (one per language)
+│   ├── en.js       # English translations
+│   ├── pt.js       # Portuguese translations
+│   ├── fr.js       # French translations
+│   ├── de.js       # German translations
+│   ├── es.js       # Spanish translations
+│   └── index.js    # Exports all locales
+├── utils/          # Utility functions (calculations, PDF export)
 ├── Calculator.css  # Main styles
 └── main.jsx        # App entry point
 ```
 
 ## 🌍 Adding Translations
 
-To add or update translations:
+The application uses a modular translation system with separate files for each language.
 
-1. Open `src/hooks/useLanguage.jsx`
-2. Add your translation keys to all language objects (`en`, `pt`, `fr`, `de`, `es`)
-3. Use the translation in components: `{t.yourKey}`
+### File Structure
 
-Example:
+Each language has its own file in `src/locales/`:
+- `en.js` - English (default)
+- `pt.js` - Portuguese
+- `fr.js` - French
+- `de.js` - German
+- `es.js` - Spanish
+
+### To Add New Translation Keys:
+
+1. **Add the key to ALL language files** to maintain consistency
+2. Each locale file exports a default object with translation keys
+3. Use descriptive key names (e.g., `monthlyPayment`, `totalInterest`)
+
+**Example - Adding a new translation:**
+
 ```javascript
-// In useLanguage.jsx
-en: {
+// In src/locales/en.js
+export default {
+  // ... existing translations
   yourNewKey: 'Your English Text',
-  // ...
-},
-pt: {
-  yourNewKey: 'Seu Texto em Português',
-  // ...
 }
 
-// In your component
-const { t } = useLanguage()
-return <div>{t.yourNewKey}</div>
+// In src/locales/pt.js
+export default {
+  // ... existing translations
+  yourNewKey: 'Seu Texto em Português',
+}
+
+// Repeat for fr.js, de.js, es.js
 ```
+
+### To Use Translations in Components:
+
+```javascript
+import { useLanguage } from '../hooks/useLanguage'
+
+function YourComponent() {
+  const { t } = useLanguage()
+  
+  return <div>{t.yourNewKey}</div>
+}
+```
+
+### To Add a New Language:
+
+1. Create a new file in `src/locales/` (e.g., `it.js` for Italian)
+2. Copy the structure from `en.js` and translate all keys
+3. Add the language to `src/locales/index.js`:
+   ```javascript
+   import it from './it'
+   
+   export const locales = {
+     // ... existing
+     it
+   }
+   
+   export const languages = {
+     // ... existing
+     it: { name: 'Italiano', flag: '🇮🇹', code: 'IT' }
+   }
+   ```
 
 ## 🎨 Adding New Themes
 
