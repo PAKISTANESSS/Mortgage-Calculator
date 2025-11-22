@@ -21,7 +21,6 @@ Thank you for your interest in contributing to the Mortgage Calculator project! 
 
 3. Install dependencies:
    ```bash
-   cd mortgage-calc
    npm install
    ```
 
@@ -100,13 +99,12 @@ We love feature suggestions! Please create an issue with:
 ### File Organization
 
 ```
-mortgage-calc/
-├── src/
-│   ├── components/      # Reusable React components
-│   ├── hooks/          # Custom React hooks
-│   ├── utils/          # Utility functions
-│   ├── Calculator.css  # Main styles
-│   └── main.jsx        # App entry point
+src/
+├── components/      # Reusable React components
+├── hooks/          # Custom React hooks
+├── utils/          # Utility functions
+├── Calculator.css  # Main styles
+└── main.jsx        # App entry point
 ```
 
 ## 🌍 Adding Translations
