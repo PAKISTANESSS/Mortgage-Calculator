@@ -131,8 +131,8 @@ function AmortizationRules({
                       value={rule.period}
                       onChange={(e) => updateRule(index, 'period', e.target.value)}
                     >
-                      <option value="month">Month(s)</option>
-                      <option value="year">Year(s)</option>
+                      <option value="month">{t.monthsOption}</option>
+                      <option value="year">{t.yearsOption}</option>
                     </select>
                   </div>
                 </>
