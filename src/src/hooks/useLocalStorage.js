@@ -11,7 +11,7 @@ export function useLocalStorage(key, initialValue) {
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = localStorage.getItem(key)
-      return item ? (typeof initialValue === 'object' ? JSON.parse(item) : item) : initialValue
+      return item ? JSON.parse(item) : initialValue
     } catch (error) {
       console.error(`Error loading ${key} from localStorage:`, error)
       return initialValue
@@ -21,8 +21,7 @@ export function useLocalStorage(key, initialValue) {
   // Update localStorage whenever value changes
   useEffect(() => {
     try {
-      const valueToStore = typeof storedValue === 'object' ? JSON.stringify(storedValue) : storedValue
-      localStorage.setItem(key, valueToStore)
+      localStorage.setItem(key, JSON.stringify(storedValue))
     } catch (error) {
       console.error(`Error saving ${key} to localStorage:`, error)
     }
