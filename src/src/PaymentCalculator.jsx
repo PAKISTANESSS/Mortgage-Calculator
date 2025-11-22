@@ -13,6 +13,7 @@ import {
   calculatePieChartData
 } from './utils/calculations'
 import { getDataFromURL } from './utils/urlSharing'
+import { exportReportToPDF } from './utils/pdfExport'
 import BasicInfoForm from './components/BasicInfoForm'
 import InsuranceForm from './components/InsuranceForm'
 import ShareButton from './components/ShareButton'
@@ -33,6 +34,7 @@ function PaymentCalculator() {
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
   const [isInsuranceExpanded, setIsInsuranceExpanded] = useState(false)
   const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(true)
+  const [isExporting, setIsExporting] = useState(false)
   
   // Field-level validation errors
   const [fieldErrors, setFieldErrors] = useState({
@@ -42,6 +44,7 @@ function PaymentCalculator() {
     spread: ''
   })
 
+  const exportRef = useRef()
   const calculateButtonRef = useRef(null)
 
   // Load data from URL on mount and auto-calculate
@@ -63,6 +66,20 @@ function PaymentCalculator() {
       }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Disable scrolling when exporting
+  useEffect(() => {
+    if (isExporting) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isExporting])
 
   const calculateMortgage = () => {
     const principal = parseFloat(loanAmount)
@@ -120,6 +137,20 @@ function PaymentCalculator() {
     setFieldErrors({ loanAmount: '', months: '', euribor: '', spread: '' })
   }
 
+  const handleExportToPDF = () => {
+    exportReportToPDF({
+      exportRef,
+      isChartExpanded: isBreakdownExpanded,
+      isScheduleExpanded,
+      isInsuranceExpanded,
+      setIsChartExpanded: setIsBreakdownExpanded,
+      setIsScheduleExpanded,
+      setIsInsuranceExpanded,
+      setIsExporting,
+      t
+    })
+  }
+
   // Calculate totals using utility functions
   const totalInterest = calculateTotalInterest(amortizationSchedule)
   const totalInsuranceAmount = calculateTotalInsurance(amortizationSchedule)
@@ -135,7 +166,7 @@ function PaymentCalculator() {
           <p className="subtitle">{t.monthlyPaymentCalc}</p>
         </header>
 
-        <div className="calculator-card">
+        <div className="calculator-card" ref={exportRef}>
           <BasicInfoForm
             loanAmount={loanAmount}
             setLoanAmount={setLoanAmount}
@@ -164,17 +195,6 @@ function PaymentCalculator() {
             <button className="reset-btn" onClick={resetCalculator}>
               {t.reset}
             </button>
-            <ShareButton 
-              path="/" 
-              data={{
-                loanAmount,
-                months,
-                euribor,
-                spread,
-                lifeInsurance,
-                houseInsurance
-              }}
-            />
           </div>
 
           {monthlyPayment && (
@@ -217,6 +237,25 @@ function PaymentCalculator() {
                   })}</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {monthlyPayment && (
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', margin: '3rem 0 2.5rem 0' }}>
+              <button className="export-btn-inline" onClick={handleExportToPDF} title={t.exportPDF}>
+                📄 {t.exportPDF}
+              </button>
+              <ShareButton 
+                path="/" 
+                data={{
+                  loanAmount,
+                  months,
+                  euribor,
+                  spread,
+                  lifeInsurance,
+                  houseInsurance
+                }}
+              />
             </div>
           )}
 
@@ -377,6 +416,17 @@ function PaymentCalculator() {
           )}
         </div>
       </div>
+
+      {/* Loading Overlay */}
+      {isExporting && (
+        <div className="export-loading-overlay">
+          <div className="export-loading-content">
+            <div className="export-spinner"></div>
+            <p>{t.exporting}</p>
+            <p className="export-loading-subtitle">{t.exportSubtitle}</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
