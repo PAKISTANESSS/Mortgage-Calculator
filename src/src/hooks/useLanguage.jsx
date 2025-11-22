@@ -16,12 +16,14 @@ export function LanguageProvider({ children }) {
 
   // Get translations for current language, fallback to English
   const t = locales[currentLanguage] || locales.en
+  const currentLocale = languages[currentLanguage]?.locale || 'en-GB'
 
   const value = {
     currentLanguage,
     setLanguage: setCurrentLanguage,
     t,
-    languages
+    languages,
+    locale: currentLocale
   }
 
   return (

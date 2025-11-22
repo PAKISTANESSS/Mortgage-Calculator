@@ -16,7 +16,7 @@ import BasicInfoForm from './components/BasicInfoForm'
 import InsuranceForm from './components/InsuranceForm'
 
 function PaymentCalculator() {
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   // Form state with localStorage persistence
   const [loanAmount, setLoanAmount] = useLocalStorage('loanAmount', '')
   const [months, setMonths] = useLocalStorage('months', '')
@@ -127,7 +127,7 @@ function PaymentCalculator() {
             <div className="result-card">
               <div className="result-label">{t.monthlyPayment}</div>
               <div className="result-amount">
-                €{monthlyPayment.toLocaleString('pt-PT', { 
+                €{monthlyPayment.toLocaleString(locale, { 
                   minimumFractionDigits: 2, 
                   maximumFractionDigits: 2 
                 })}
@@ -135,7 +135,7 @@ function PaymentCalculator() {
               <div className="result-details">
                 <div className="detail-item">
                   <span>{t.loanAmount}:</span>
-                  <span>€{parseFloat(loanAmount).toLocaleString('pt-PT', { 
+                  <span>€{parseFloat(loanAmount).toLocaleString(locale, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
@@ -150,14 +150,14 @@ function PaymentCalculator() {
                 </div>
                 <div className="detail-item">
                   <span>{t.totalAmountPaid}:</span>
-                  <span>€{(monthlyPayment * parseInt(months)).toLocaleString('pt-PT', { 
+                  <span>€{(monthlyPayment * parseInt(months)).toLocaleString(locale, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
                 </div>
                 <div className="detail-item">
                   <span>{t.totalInterest}:</span>
-                  <span>€{totalInterest.toLocaleString('pt-PT', { 
+                  <span>€{totalInterest.toLocaleString(locale, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
@@ -206,7 +206,7 @@ function PaymentCalculator() {
                         <div className="pie-chart-center">
                           <div className="pie-chart-total">{t.total}</div>
                           <div className="pie-chart-amount">
-                            €{grandTotal.toLocaleString('pt-PT', { 
+                            €{grandTotal.toLocaleString(locale, { 
                               minimumFractionDigits: 0, 
                               maximumFractionDigits: 0 
                             })}
@@ -219,7 +219,7 @@ function PaymentCalculator() {
                           <div className="legend-color" style={{ background: '#667eea' }}></div>
                           <div className="legend-details">
                             <div className="legend-label">{t.principal}</div>
-                            <div className="legend-value">€{principal.toLocaleString('pt-PT', { 
+                            <div className="legend-value">€{principal.toLocaleString(locale, { 
                               minimumFractionDigits: 0, 
                               maximumFractionDigits: 0 
                             })}</div>
@@ -231,7 +231,7 @@ function PaymentCalculator() {
                           <div className="legend-color" style={{ background: '#f093fb' }}></div>
                           <div className="legend-details">
                             <div className="legend-label">{t.interest}</div>
-                            <div className="legend-value">€{totalInterest.toLocaleString('pt-PT', { 
+                            <div className="legend-value">€{totalInterest.toLocaleString(locale, { 
                               minimumFractionDigits: 0, 
                               maximumFractionDigits: 0 
                             })}</div>
@@ -244,7 +244,7 @@ function PaymentCalculator() {
                             <div className="legend-color" style={{ background: '#4facfe' }}></div>
                             <div className="legend-details">
                               <div className="legend-label">{t.insurance}</div>
-                              <div className="legend-value">€{totalInsuranceAmount.toLocaleString('pt-PT', { 
+                              <div className="legend-value">€{totalInsuranceAmount.toLocaleString(locale, { 
                                 minimumFractionDigits: 0, 
                                 maximumFractionDigits: 0 
                               })}</div>
@@ -291,25 +291,25 @@ function PaymentCalculator() {
                         <tr key={`${row.month}-${index}`} className={row.isYearlySummary ? 'yearly-summary' : ''}>
                           <td>{row.year}</td>
                           <td>{row.month}</td>
-                          <td>€{row.principal.toLocaleString('pt-PT', { 
+                          <td>€{row.principal.toLocaleString(locale, { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}</td>
-                          <td>€{row.interest.toLocaleString('pt-PT', { 
+                          <td>€{row.interest.toLocaleString(locale, { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}</td>
                           {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
-                            <td>€{row.insurance.toLocaleString('pt-PT', { 
+                            <td>€{row.insurance.toLocaleString(locale, { 
                               minimumFractionDigits: 2, 
                               maximumFractionDigits: 2 
                             })}</td>
                           )}
-                          <td>€{row.totalPayment.toLocaleString('pt-PT', { 
+                          <td>€{row.totalPayment.toLocaleString(locale, { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}</td>
-                          <td>€{row.balance.toLocaleString('pt-PT', { 
+                          <td>€{row.balance.toLocaleString(locale, { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}</td>
