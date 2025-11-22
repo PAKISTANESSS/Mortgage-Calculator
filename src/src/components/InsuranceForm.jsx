@@ -10,6 +10,19 @@ function InsuranceForm({
 }) {
   const { t } = useLanguage()
   
+  // Validate numeric input
+  const handleNumericInput = (value, setter) => {
+    if (value === '') {
+      setter('')
+      return
+    }
+    
+    const regex = /^\d*\.?\d*$/
+    if (regex.test(value)) {
+      setter(value)
+    }
+  }
+  
   return (
     <div className="section">
       <h2 
@@ -29,12 +42,11 @@ function InsuranceForm({
             </label>
             <input
               id="lifeInsurance"
-              type="number"
+              type="text"
+              inputMode="decimal"
               value={lifeInsurance}
-              onChange={(e) => setLifeInsurance(e.target.value)}
+              onChange={(e) => handleNumericInput(e.target.value, setLifeInsurance)}
               placeholder="0"
-              min="0"
-              step="0.01"
             />
           </div>
 
@@ -45,12 +57,11 @@ function InsuranceForm({
             </label>
             <input
               id="houseInsurance"
-              type="number"
+              type="text"
+              inputMode="decimal"
               value={houseInsurance}
-              onChange={(e) => setHouseInsurance(e.target.value)}
+              onChange={(e) => handleNumericInput(e.target.value, setHouseInsurance)}
               placeholder="0"
-              min="0"
-              step="0.01"
             />
           </div>
         </div>

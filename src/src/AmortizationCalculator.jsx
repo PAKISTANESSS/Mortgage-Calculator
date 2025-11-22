@@ -41,6 +41,14 @@ function AmortizationCalculator() {
   const [isInsuranceExpanded, setIsInsuranceExpanded] = useState(false)
   const [isChartExpanded, setIsChartExpanded] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
+  
+  // Field-level validation errors
+  const [fieldErrors, setFieldErrors] = useState({
+    loanAmount: '',
+    months: '',
+    euribor: '',
+    spread: ''
+  })
 
   const exportRef = useRef()
   const calculateButtonRef = useRef(null)
@@ -89,9 +97,18 @@ function AmortizationCalculator() {
     const life = parseFloat(lifeInsurance) || 0
     const house = parseFloat(houseInsurance) || 0
 
-    // Validate inputs
-    if (!principal || !numberOfMonths || isNaN(euriborRate) || isNaN(spreadRate)) {
-      alert('Please fill in all fields with valid numbers')
+    // Validate inputs field by field
+    const errors = {
+      loanAmount: !principal ? t.validationError : '',
+      months: !numberOfMonths ? t.validationError : '',
+      euribor: isNaN(euriborRate) ? t.validationError : '',
+      spread: isNaN(spreadRate) ? t.validationError : ''
+    }
+
+    setFieldErrors(errors)
+
+    // If any errors exist, stop
+    if (Object.values(errors).some(error => error !== '')) {
       return
     }
 
@@ -131,6 +148,7 @@ function AmortizationCalculator() {
     setScheduleWithoutExtra([])
     setAmortizationRules([{ type: 'recurring', frequency: '1', period: 'year', amount: '1000', month: '', year: '' }])
     setRecalculatePayment(false)
+    setFieldErrors({ loanAmount: '', months: '', euribor: '', spread: '' })
   }
 
   const handleExportToPDF = () => {
@@ -175,6 +193,7 @@ function AmortizationCalculator() {
             setEuribor={setEuribor}
             spread={spread}
             setSpread={setSpread}
+            errors={fieldErrors}
           />
 
           <InsuranceForm

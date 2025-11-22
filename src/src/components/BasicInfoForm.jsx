@@ -1,7 +1,20 @@
 import { useLanguage } from '../hooks/useLanguage'
 
-function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, setEuribor, spread, setSpread }) {
+function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, setEuribor, spread, setSpread, errors = {} }) {
   const { t } = useLanguage()
+  
+  // Validate numeric input
+  const handleNumericInput = (value, setter, allowDecimals = false) => {
+    if (value === '') {
+      setter('')
+      return
+    }
+    
+    const regex = allowDecimals ? /^\d*\.?\d*$/ : /^\d*$/
+    if (regex.test(value)) {
+      setter(value)
+    }
+  }
   
   return (
     <div className="section">
@@ -14,13 +27,14 @@ function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, 
         </label>
         <input
           id="loanAmount"
-          type="number"
+          type="text"
+          inputMode="numeric"
           value={loanAmount}
-          onChange={(e) => setLoanAmount(e.target.value)}
+          onChange={(e) => handleNumericInput(e.target.value, setLoanAmount, false)}
           placeholder="250000"
-          min="0"
-          step="1000"
+          className={errors.loanAmount ? 'error' : ''}
         />
+        {errors.loanAmount && <span className="field-error">{errors.loanAmount}</span>}
       </div>
 
       <div className="input-group">
@@ -30,13 +44,14 @@ function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, 
         </label>
         <input
           id="months"
-          type="number"
+          type="text"
+          inputMode="numeric"
           value={months}
-          onChange={(e) => setMonths(e.target.value)}
+          onChange={(e) => handleNumericInput(e.target.value, setMonths, false)}
           placeholder="360"
-          min="1"
-          step="1"
+          className={errors.months ? 'error' : ''}
         />
+        {errors.months && <span className="field-error">{errors.months}</span>}
       </div>
 
       <div className="input-row">
@@ -47,14 +62,18 @@ function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, 
           </label>
           <input
             id="euribor"
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={euribor}
-            onChange={(e) => setEuribor(e.target.value)}
+            onChange={(e) => handleNumericInput(e.target.value, setEuribor, true)}
             placeholder="3.5"
-            min="0"
-            step="0.01"
+            className={errors.euribor ? 'error' : ''}
           />
-          <span className="input-hint">{t.euriborHint}</span>
+          {errors.euribor ? (
+            <span className="field-error">{errors.euribor}</span>
+          ) : (
+            <span className="input-hint">{t.euriborHint}</span>
+          )}
         </div>
 
         <div className="input-group">
@@ -64,13 +83,14 @@ function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, 
           </label>
           <input
             id="spread"
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={spread}
-            onChange={(e) => setSpread(e.target.value)}
+            onChange={(e) => handleNumericInput(e.target.value, setSpread, true)}
             placeholder="1.0"
-            min="0"
-            step="0.01"
+            className={errors.spread ? 'error' : ''}
           />
+          {errors.spread && <span className="field-error">{errors.spread}</span>}
         </div>
       </div>
     </div>

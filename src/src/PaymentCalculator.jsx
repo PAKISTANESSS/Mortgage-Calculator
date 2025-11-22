@@ -33,6 +33,14 @@ function PaymentCalculator() {
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
   const [isInsuranceExpanded, setIsInsuranceExpanded] = useState(false)
   const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(true)
+  
+  // Field-level validation errors
+  const [fieldErrors, setFieldErrors] = useState({
+    loanAmount: '',
+    months: '',
+    euribor: '',
+    spread: ''
+  })
 
   const calculateButtonRef = useRef(null)
 
@@ -64,9 +72,18 @@ function PaymentCalculator() {
     const life = parseFloat(lifeInsurance) || 0
     const house = parseFloat(houseInsurance) || 0
 
-    // Validate inputs
-    if (!principal || !numberOfMonths || isNaN(euriborRate) || isNaN(spreadRate)) {
-      alert(t.validationError)
+    // Validate inputs field by field
+    const errors = {
+      loanAmount: !principal ? t.validationError : '',
+      months: !numberOfMonths ? t.validationError : '',
+      euribor: isNaN(euriborRate) ? t.validationError : '',
+      spread: isNaN(spreadRate) ? t.validationError : ''
+    }
+
+    setFieldErrors(errors)
+
+    // If any errors exist, stop
+    if (Object.values(errors).some(error => error !== '')) {
       return
     }
 
@@ -100,6 +117,7 @@ function PaymentCalculator() {
     setHouseInsurance('')
     setMonthlyPayment(null)
     setAmortizationSchedule([])
+    setFieldErrors({ loanAmount: '', months: '', euribor: '', spread: '' })
   }
 
   // Calculate totals using utility functions
@@ -127,6 +145,7 @@ function PaymentCalculator() {
             setEuribor={setEuribor}
             spread={spread}
             setSpread={setSpread}
+            errors={fieldErrors}
           />
 
           <InsuranceForm
