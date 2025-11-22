@@ -2,7 +2,15 @@ import { useState, useRef, useEffect } from 'react'
 import './Calculator.css'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { useLanguage } from './hooks/useLanguage'
-import { calculateAmortizationSchedule, calculateScheduleWithoutExtra } from './utils/calculations'
+import { 
+  calculateAmortizationSchedule, 
+  calculateScheduleWithoutExtra,
+  calculateMonthlyRate,
+  calculateAnnualRate,
+  calculateTotalInterest,
+  calculateTotalAmountPaid,
+  calculateAveragePayments
+} from './utils/calculations'
 import { exportReportToPDF } from './utils/pdfExport'
 import BasicInfoForm from './components/BasicInfoForm'
 import InsuranceForm from './components/InsuranceForm'
@@ -75,8 +83,8 @@ function AmortizationCalculator() {
     })
 
     // Calculate schedule without extra payments for comparison
-    const annualRate = euriborRate + spreadRate
-    const monthlyRate = annualRate / 12 / 100
+    const annualRate = calculateAnnualRate(euriborRate, spreadRate)
+    const monthlyRate = calculateMonthlyRate(annualRate)
     const scheduleNoExtra = calculateScheduleWithoutExtra({
       principal,
       numberOfMonths,
@@ -114,11 +122,8 @@ function AmortizationCalculator() {
     })
   }
 
-  const totalInterest = amortizationSchedule.length > 0
-    ? amortizationSchedule
-        .filter(row => !row.isYearlySummary)
-        .reduce((sum, row) => sum + row.interest, 0)
-    : 0
+  // Calculate totals using utility functions
+  const totalInterest = calculateTotalInterest(amortizationSchedule)
 
   return (
     <div className="app">
@@ -169,71 +174,42 @@ function AmortizationCalculator() {
             <div className="result-card">
               <div className="result-label">{t.avgMonthlyPayments}</div>
               {(() => {
-                const dataPoints = amortizationSchedule.filter(row => !row.isYearlySummary)
-                const totalMonths = dataPoints.length
-                
-                // First year average (months 1-12)
-                const firstYearEnd = Math.min(12, totalMonths)
-                const firstYearPayments = dataPoints.slice(0, firstYearEnd)
-                const firstYearAvgBase = firstYearPayments.reduce((sum, row) => sum + row.basePayment, 0) / firstYearEnd
-                const firstYearAvgTotal = firstYearPayments.reduce((sum, row) => sum + row.totalPayment, 0) / firstYearEnd
-                
-                // 30% mark average
-                const thirtyPercentMonth = Math.floor(totalMonths * 0.30)
-                const yearAt30Start = Math.max(0, thirtyPercentMonth - 6)
-                const yearAt30End = Math.min(totalMonths, thirtyPercentMonth + 6)
-                const yearAt30Payments = dataPoints.slice(yearAt30Start, yearAt30End)
-                const yearAt30AvgBase = yearAt30Payments.length > 0 
-                  ? yearAt30Payments.reduce((sum, row) => sum + row.basePayment, 0) / yearAt30Payments.length 
-                  : 0
-                const yearAt30AvgTotal = yearAt30Payments.length > 0 
-                  ? yearAt30Payments.reduce((sum, row) => sum + row.totalPayment, 0) / yearAt30Payments.length 
-                  : 0
-                
-                // 60% mark average
-                const sixtyPercentMonth = Math.floor(totalMonths * 0.60)
-                const yearAt60Start = Math.max(0, sixtyPercentMonth - 6)
-                const yearAt60End = Math.min(totalMonths, sixtyPercentMonth + 6)
-                const yearAt60Payments = dataPoints.slice(yearAt60Start, yearAt60End)
-                const yearAt60AvgBase = yearAt60Payments.length > 0 
-                  ? yearAt60Payments.reduce((sum, row) => sum + row.basePayment, 0) / yearAt60Payments.length 
-                  : 0
-                const yearAt60AvgTotal = yearAt60Payments.length > 0 
-                  ? yearAt60Payments.reduce((sum, row) => sum + row.totalPayment, 0) / yearAt60Payments.length 
-                  : 0
+                // Calculate average payments using utility function
+                const avgPayments = calculateAveragePayments(amortizationSchedule)
+                const { firstYear, thirtyPercent, sixtyPercent } = avgPayments
                 
                 return (
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                       <div>
-                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} 1</div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} {firstYear.year}</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
-                          €{firstYearAvgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          {firstYearAvgTotal !== firstYearAvgBase && (
+                          €{firstYear.avgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {firstYear.avgTotal !== firstYear.avgBase && (
                             <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
-                              → (€{firstYearAvgTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                              → (€{firstYear.avgTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                             </span>
                           )}
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} {Math.ceil(totalMonths * 0.30 / 12)}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} {thirtyPercent.year}</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
-                          €{yearAt30AvgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          {yearAt30AvgTotal !== yearAt30AvgBase && (
+                          €{thirtyPercent.avgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {thirtyPercent.avgTotal !== thirtyPercent.avgBase && (
                             <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
-                              → (€{yearAt30AvgTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                              → (€{thirtyPercent.avgTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                             </span>
                           )}
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} {Math.ceil(totalMonths * 0.60 / 12)}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} {sixtyPercent.year}</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
-                          €{yearAt60AvgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          {yearAt60AvgTotal !== yearAt60AvgBase && (
+                          €{sixtyPercent.avgBase.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {sixtyPercent.avgTotal !== sixtyPercent.avgBase && (
                             <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
-                              → (€{yearAt60AvgTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                              → (€{sixtyPercent.avgTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                             </span>
                           )}
                         </div>
@@ -249,11 +225,7 @@ function AmortizationCalculator() {
                 </div>
                 <div className="detail-item">
                   <span>{t.totalAmountPaid}:</span>
-                  <span>€{(() => {
-                    const dataPoints = amortizationSchedule.filter(row => !row.isYearlySummary)
-                    const totalPaid = dataPoints.reduce((sum, row) => sum + row.totalPayment, 0)
-                    return totalPaid.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                  })()}</span>
+                  <span>€{calculateTotalAmountPaid(amortizationSchedule).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="detail-item">
                   <span>{t.totalInterest}:</span>

@@ -2,7 +2,16 @@ import { useState } from 'react'
 import './Calculator.css'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { useLanguage } from './hooks/useLanguage'
-import { calculateMonthlyPayment } from './utils/calculations'
+import { 
+  calculateMonthlyPayment,
+  calculateMonthlyRate,
+  calculateAnnualRate,
+  generatePaymentSchedule,
+  calculateTotalInterest,
+  calculateTotalInsurance,
+  calculateGrandTotal,
+  calculatePieChartData
+} from './utils/calculations'
 import BasicInfoForm from './components/BasicInfoForm'
 import InsuranceForm from './components/InsuranceForm'
 
@@ -37,89 +46,23 @@ function PaymentCalculator() {
       return
     }
 
-    // Calculate monthly interest rate and payment
-    const annualRate = euriborRate + spreadRate
-    const monthlyRate = annualRate / 12 / 100
+    // Calculate interest rates
+    const annualRate = calculateAnnualRate(euriborRate, spreadRate)
+    const monthlyRate = calculateMonthlyRate(annualRate)
+    
+    // Calculate monthly payment
     const payment = calculateMonthlyPayment(principal, monthlyRate, numberOfMonths)
-
-    // Total insurance per month
     const totalInsurance = life + house
-
     setMonthlyPayment(payment + totalInsurance)
 
-    // Generate amortization schedule with yearly summaries
-    const schedule = []
-    let remainingBalance = principal
-    let yearlyPrincipal = 0
-    let yearlyInterest = 0
-    let yearlyInsurance = 0
-    let yearlyTotal = 0
-
-    for (let i = 1; i <= numberOfMonths; i++) {
-      const interestPayment = remainingBalance * monthlyRate
-      const principalPayment = payment - interestPayment
-      remainingBalance -= principalPayment
-
-      const monthInYear = ((i - 1) % 12) + 1
-      const yearNumber = Math.floor((i - 1) / 12) + 1
-
-      const monthData = {
-        month: monthInYear,
-        year: yearNumber,
-        absoluteMonth: i,
-        payment: payment,
-        principal: principalPayment,
-        interest: interestPayment,
-        insurance: totalInsurance,
-        totalPayment: payment + totalInsurance,
-        balance: Math.max(0, remainingBalance),
-        isYearlySummary: false
-      }
-
-      schedule.push(monthData)
-
-      yearlyPrincipal += principalPayment
-      yearlyInterest += interestPayment
-      yearlyInsurance += totalInsurance
-      yearlyTotal += payment + totalInsurance
-
-      // Add yearly summary row
-      if (i % 12 === 0) {
-        schedule.push({
-          month: 'Total',
-          year: i / 12,
-          absoluteMonth: i,
-          payment: payment,
-          principal: yearlyPrincipal,
-          interest: yearlyInterest,
-          insurance: yearlyInsurance,
-          totalPayment: yearlyTotal,
-          balance: Math.max(0, remainingBalance),
-          isYearlySummary: true
-        })
-        yearlyPrincipal = 0
-        yearlyInterest = 0
-        yearlyInsurance = 0
-        yearlyTotal = 0
-      }
-    }
-
-    // Add final year summary if not a full year
-    if (numberOfMonths % 12 !== 0 && yearlyTotal > 0) {
-      const finalYear = Math.floor(numberOfMonths / 12) + 1
-      schedule.push({
-        month: 'Total',
-        year: finalYear,
-        absoluteMonth: numberOfMonths,
-        payment: payment,
-        principal: yearlyPrincipal,
-        interest: yearlyInterest,
-        insurance: yearlyInsurance,
-        totalPayment: yearlyTotal,
-        balance: Math.max(0, remainingBalance),
-        isYearlySummary: true
-      })
-    }
+    // Generate payment schedule
+    const schedule = generatePaymentSchedule({
+      principal,
+      numberOfMonths,
+      monthlyRate,
+      lifeInsurance: life,
+      houseInsurance: house
+    })
 
     setAmortizationSchedule(schedule)
   }
@@ -135,14 +78,11 @@ function PaymentCalculator() {
     setAmortizationSchedule([])
   }
 
-  const totalInterest = amortizationSchedule.length > 0
-    ? amortizationSchedule
-        .filter(row => !row.isYearlySummary)
-        .reduce((sum, row) => sum + row.interest, 0)
-    : 0
-
+  // Calculate totals using utility functions
+  const totalInterest = calculateTotalInterest(amortizationSchedule)
+  const totalInsuranceAmount = calculateTotalInsurance(amortizationSchedule)
   const grandTotal = amortizationSchedule.length > 0
-    ? parseFloat(loanAmount) + totalInterest + (amortizationSchedule.filter(row => !row.isYearlySummary).reduce((sum, row) => sum + row.insurance, 0))
+    ? calculateGrandTotal(parseFloat(loanAmount), amortizationSchedule)
     : 0
 
   return (
@@ -238,16 +178,10 @@ function PaymentCalculator() {
               
               {isBreakdownExpanded && (() => {
                 const principal = parseFloat(loanAmount) || 0
-                const life = parseFloat(lifeInsurance) || 0
-                const house = parseFloat(houseInsurance) || 0
-                const totalInsurance = (life + house) * amortizationSchedule.filter(row => !row.isYearlySummary).length
                 
-                const principalPercent = (principal / grandTotal * 100).toFixed(1)
-                const interestPercent = (totalInterest / grandTotal * 100).toFixed(1)
-                const insurancePercent = totalInsurance > 0 ? (totalInsurance / grandTotal * 100).toFixed(1) : 0
-                
-                const principalDegrees = (principal / grandTotal) * 360
-                const interestDegrees = principalDegrees + (totalInterest / grandTotal) * 360
+                // Calculate pie chart data using utility function
+                const pieData = calculatePieChartData(principal, totalInterest, totalInsuranceAmount)
+                const { principalPercent, interestPercent, insurancePercent, principalDegrees, interestDegrees } = pieData
                 
                 return (
                   <div className="chart-container">
@@ -255,7 +189,7 @@ function PaymentCalculator() {
                       <div 
                         className="pie-chart"
                         style={{
-                          background: totalInsurance > 0 
+                          background: totalInsuranceAmount > 0 
                             ? `conic-gradient(
                                 from 0deg,
                                 #667eea 0deg ${principalDegrees}deg,
@@ -305,12 +239,12 @@ function PaymentCalculator() {
                           </div>
                         </div>
                         
-                        {totalInsurance > 0 && (
+                        {totalInsuranceAmount > 0 && (
                           <div className="legend-item">
                             <div className="legend-color" style={{ background: '#4facfe' }}></div>
                             <div className="legend-details">
                               <div className="legend-label">{t.insurance}</div>
-                              <div className="legend-value">€{totalInsurance.toLocaleString('pt-PT', { 
+                              <div className="legend-value">€{totalInsuranceAmount.toLocaleString('pt-PT', { 
                                 minimumFractionDigits: 0, 
                                 maximumFractionDigits: 0 
                               })}</div>
