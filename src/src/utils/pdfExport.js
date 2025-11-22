@@ -240,12 +240,18 @@ export async function exportReportToPDF({
     const buttonGroup = element.querySelector('.button-group')
     const exportButton = element.querySelector('.export-btn-inline')
     const exportButtonParent = exportButton ? exportButton.parentElement : null
+    const addRuleButtons = element.querySelectorAll('.add-rule-btn')
+    const removeRuleButtons = element.querySelectorAll('.remove-rule-btn')
     
     const buttonGroupDisplay = buttonGroup ? buttonGroup.style.display : null
     const exportButtonParentDisplay = exportButtonParent ? exportButtonParent.style.display : null
+    const addRuleButtonsDisplay = Array.from(addRuleButtons).map(btn => btn.style.display)
+    const removeRuleButtonsDisplay = Array.from(removeRuleButtons).map(btn => btn.style.display)
     
     if (buttonGroup) buttonGroup.style.display = 'none'
     if (exportButtonParent) exportButtonParent.style.display = 'none'
+    addRuleButtons.forEach(btn => btn.style.display = 'none')
+    removeRuleButtons.forEach(btn => btn.style.display = 'none')
 
     // Make result-card background match table header exactly
     const resultCard = element.querySelector('.result-card')
@@ -331,6 +337,15 @@ export async function exportReportToPDF({
     if (buttonGroup && buttonGroupDisplay === null) buttonGroup.style.display = ''
     if (exportButtonParent && exportButtonParentDisplay !== null) exportButtonParent.style.display = exportButtonParentDisplay
     if (exportButtonParent && exportButtonParentDisplay === null) exportButtonParent.style.display = ''
+    
+    addRuleButtons.forEach((btn, index) => {
+      if (addRuleButtonsDisplay[index] !== null) btn.style.display = addRuleButtonsDisplay[index]
+      else btn.style.display = ''
+    })
+    removeRuleButtons.forEach((btn, index) => {
+      if (removeRuleButtonsDisplay[index] !== null) btn.style.display = removeRuleButtonsDisplay[index]
+      else btn.style.display = ''
+    })
 
     // Restore original states
     setIsChartExpanded(wasChartExpanded)
@@ -356,10 +371,14 @@ export async function exportReportToPDF({
       const exportButton = element.querySelector('.export-btn-inline')
       const exportButtonParent = exportButton ? exportButton.parentElement : null
       const resultCard = element.querySelector('.result-card')
+      const addRuleButtons = element.querySelectorAll('.add-rule-btn')
+      const removeRuleButtons = element.querySelectorAll('.remove-rule-btn')
       
       if (buttonGroup) buttonGroup.style.display = ''
       if (exportButtonParent) exportButtonParent.style.display = ''
       if (resultCard) resultCard.style.cssText = ''
+      addRuleButtons.forEach(btn => btn.style.display = '')
+      removeRuleButtons.forEach(btn => btn.style.display = '')
     }
     
     setIsExporting(false)
