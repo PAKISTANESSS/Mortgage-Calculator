@@ -10,7 +10,7 @@ function ComparisonPieCharts({
   lifeInsurance,
   houseInsurance
 }) {
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const { currency } = useCurrency()
 
   return (
@@ -58,23 +58,23 @@ function ComparisonPieCharts({
                 >
                   <div className="pie-chart-center-mini">
                     <div className="pie-chart-total-mini">{t.totalPaid}</div>
-                    <div className="pie-chart-amount-mini">{currency.symbol}{total.toLocaleString(currency.locale, { maximumFractionDigits: 0 })}</div>
+                    <div className="pie-chart-amount-mini">{currency.symbol}{total.toLocaleString(locale, { maximumFractionDigits: 0 })}</div>
                   </div>
                 </div>
               </div>
               <div className="pie-legend-mini">
                 <div className="legend-item-mini">
                   <span className="legend-color-mini" style={{ background: '#667eea' }}></span>
-                  <span className="legend-text-mini">{t.principal}: {currency.symbol}{principal.toLocaleString(currency.locale, { maximumFractionDigits: 0 })} ({principalPercent}%)</span>
+                  <span className="legend-text-mini">{t.principal}: {currency.symbol}{principal.toLocaleString(locale, { maximumFractionDigits: 0 })} ({principalPercent}%)</span>
                 </div>
                 <div className="legend-item-mini">
                   <span className="legend-color-mini" style={{ background: '#fc8181' }}></span>
-                  <span className="legend-text-mini">{t.interest}: {currency.symbol}{totalInterest.toLocaleString(currency.locale, { maximumFractionDigits: 0 })} ({interestPercent}%)</span>
+                  <span className="legend-text-mini">{t.interest}: {currency.symbol}{totalInterest.toLocaleString(locale, { maximumFractionDigits: 0 })} ({interestPercent}%)</span>
                 </div>
                 {totalInsurance > 0 && (
                   <div className="legend-item-mini">
                     <span className="legend-color-mini" style={{ background: '#f6ad55' }}></span>
-                    <span className="legend-text-mini">{t.insurance}: {currency.symbol}{totalInsurance.toLocaleString(currency.locale, { maximumFractionDigits: 0 })} ({insurancePercent}%)</span>
+                    <span className="legend-text-mini">{t.insurance}: {currency.symbol}{totalInsurance.toLocaleString(locale, { maximumFractionDigits: 0 })} ({insurancePercent}%)</span>
                   </div>
                 )}
               </div>
@@ -130,29 +130,29 @@ function ComparisonPieCharts({
                 >
                   <div className="pie-chart-center-mini">
                     <div className="pie-chart-total-mini">{t.totalPaid}</div>
-                    <div className="pie-chart-amount-mini">{currency.symbol}{total.toLocaleString(currency.locale, { maximumFractionDigits: 0 })}</div>
+                    <div className="pie-chart-amount-mini">{currency.symbol}{total.toLocaleString(locale, { maximumFractionDigits: 0 })}</div>
                   </div>
                 </div>
               </div>
               <div className="pie-legend-mini">
                 <div className="legend-item-mini">
                   <span className="legend-color-mini" style={{ background: '#667eea' }}></span>
-                  <span className="legend-text-mini">{t.principal}: {currency.symbol}{regularPrincipal.toLocaleString(currency.locale, { maximumFractionDigits: 0 })} ({regularPrincipalPercent}%)</span>
+                  <span className="legend-text-mini">{t.principal}: {currency.symbol}{regularPrincipal.toLocaleString(locale, { maximumFractionDigits: 0 })} ({regularPrincipalPercent}%)</span>
                 </div>
                 {totalExtra > 0 && (
                   <div className="legend-item-mini">
                     <span className="legend-color-mini" style={{ background: '#48bb78' }}></span>
-                    <span className="legend-text-mini">{t.extraPayments}: {currency.symbol}{totalExtra.toLocaleString(currency.locale, { maximumFractionDigits: 0 })} ({extraPercent}%)</span>
+                    <span className="legend-text-mini">{t.extraPayments}: {currency.symbol}{totalExtra.toLocaleString(locale, { maximumFractionDigits: 0 })} ({extraPercent}%)</span>
                   </div>
                 )}
                 <div className="legend-item-mini">
                   <span className="legend-color-mini" style={{ background: '#fc8181' }}></span>
-                  <span className="legend-text-mini">{t.interest}: {currency.symbol}{totalInterest.toLocaleString(currency.locale, { maximumFractionDigits: 0 })} ({interestPercent}%)</span>
+                  <span className="legend-text-mini">{t.interest}: {currency.symbol}{totalInterest.toLocaleString(locale, { maximumFractionDigits: 0 })} ({interestPercent}%)</span>
                 </div>
                 {totalInsurance > 0 && (
                   <div className="legend-item-mini">
                     <span className="legend-color-mini" style={{ background: '#f6ad55' }}></span>
-                    <span className="legend-text-mini">{t.insurance}: {currency.symbol}{totalInsurance.toLocaleString(currency.locale, { maximumFractionDigits: 0 })} ({insurancePercent}%)</span>
+                    <span className="legend-text-mini">{t.insurance}: {currency.symbol}{totalInsurance.toLocaleString(locale, { maximumFractionDigits: 0 })} ({insurancePercent}%)</span>
                   </div>
                 )}
                 {totalExtra > 0 && (
@@ -161,7 +161,7 @@ function ComparisonPieCharts({
                       const balance = row.month === 1 ? loanPrincipal : scheduleWithoutExtra[row.month - 2].balance
                       const monthlyRate = (parseFloat(euribor) + parseFloat(spread)) / 12 / 100
                       return sum + (balance * monthlyRate)
-                    }, 0) - totalInterest).toLocaleString(currency.locale, { maximumFractionDigits: 0 })} {t.inInterest}
+                    }, 0) - totalInterest).toLocaleString(locale, { maximumFractionDigits: 0 })} {t.inInterest}
                   </div>
                 )}
               </div>

@@ -203,7 +203,7 @@ function PaymentCalculator() {
             <div className="result-card">
               <div className="result-label">{t.monthlyPayment}</div>
               <div className="result-amount">
-                {currency.symbol}{monthlyPayment.toLocaleString(currency.locale, { 
+                {currency.symbol}{monthlyPayment.toLocaleString(locale, { 
                   minimumFractionDigits: 2, 
                   maximumFractionDigits: 2 
                 })}
@@ -211,7 +211,7 @@ function PaymentCalculator() {
               <div className="result-details">
                 <div className="detail-item">
                   <span>{t.loanAmount}:</span>
-                  <span>{currency.symbol}{parseFloat(loanAmount).toLocaleString(currency.locale, { 
+                  <span>{currency.symbol}{parseFloat(loanAmount).toLocaleString(locale, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
@@ -226,14 +226,14 @@ function PaymentCalculator() {
                 </div>
                 <div className="detail-item">
                   <span>{t.totalAmountPaid}:</span>
-                  <span>{currency.symbol}{(monthlyPayment * parseInt(months)).toLocaleString(currency.locale, { 
+                  <span>{currency.symbol}{(monthlyPayment * parseInt(months)).toLocaleString(locale, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
                 </div>
                 <div className="detail-item">
                   <span>{t.totalInterest}:</span>
-                  <span>{currency.symbol}{totalInterest.toLocaleString(currency.locale, { 
+                  <span>{currency.symbol}{totalInterest.toLocaleString(locale, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}</span>
@@ -301,7 +301,7 @@ function PaymentCalculator() {
                         <div className="pie-chart-center">
                           <div className="pie-chart-total">{t.total}</div>
                           <div className="pie-chart-amount">
-                            {currency.symbol}{grandTotal.toLocaleString(currency.locale, { 
+                            {currency.symbol}{grandTotal.toLocaleString(locale, { 
                               minimumFractionDigits: 0, 
                               maximumFractionDigits: 0 
                             })}
@@ -314,7 +314,7 @@ function PaymentCalculator() {
                           <div className="legend-color" style={{ background: '#667eea' }}></div>
                           <div className="legend-details">
                             <div className="legend-label">{t.principal}</div>
-                            <div className="legend-value">{currency.symbol}{principal.toLocaleString(currency.locale, { 
+                            <div className="legend-value">{currency.symbol}{principal.toLocaleString(locale, { 
                               minimumFractionDigits: 0, 
                               maximumFractionDigits: 0 
                             })}</div>
@@ -326,7 +326,7 @@ function PaymentCalculator() {
                           <div className="legend-color" style={{ background: '#f093fb' }}></div>
                           <div className="legend-details">
                             <div className="legend-label">{t.interest}</div>
-                            <div className="legend-value">{currency.symbol}{totalInterest.toLocaleString(currency.locale, { 
+                            <div className="legend-value">{currency.symbol}{totalInterest.toLocaleString(locale, { 
                               minimumFractionDigits: 0, 
                               maximumFractionDigits: 0 
                             })}</div>
@@ -339,7 +339,7 @@ function PaymentCalculator() {
                             <div className="legend-color" style={{ background: '#4facfe' }}></div>
                             <div className="legend-details">
                               <div className="legend-label">{t.insurance}</div>
-                              <div className="legend-value">{currency.symbol}{totalInsuranceAmount.toLocaleString(currency.locale, { 
+                              <div className="legend-value">{currency.symbol}{totalInsuranceAmount.toLocaleString(locale, { 
                                 minimumFractionDigits: 0, 
                                 maximumFractionDigits: 0 
                               })}</div>
@@ -386,25 +386,25 @@ function PaymentCalculator() {
                         <tr key={`${row.month}-${index}`} className={row.isYearlySummary ? 'yearly-summary' : ''}>
                           <td>{row.year}</td>
                           <td>{row.month}</td>
-                          <td>{currency.symbol}{row.principal.toLocaleString(currency.locale, { 
+                          <td>{currency.symbol}{row.principal.toLocaleString(locale, { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}</td>
-                          <td>{currency.symbol}{row.interest.toLocaleString(currency.locale, { 
+                          <td>{currency.symbol}{row.interest.toLocaleString(locale, { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}</td>
                           {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
-                            <td>{currency.symbol}{row.insurance.toLocaleString(currency.locale, { 
+                            <td>{currency.symbol}{row.insurance.toLocaleString(locale, { 
                               minimumFractionDigits: 2, 
                               maximumFractionDigits: 2 
                             })}</td>
                           )}
-                          <td>{currency.symbol}{row.totalPayment.toLocaleString(currency.locale, { 
+                          <td>{currency.symbol}{row.totalPayment.toLocaleString(locale, { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}</td>
-                          <td>{currency.symbol}{row.balance.toLocaleString(currency.locale, { 
+                          <td>{currency.symbol}{row.balance.toLocaleString(locale, { 
                             minimumFractionDigits: 2, 
                             maximumFractionDigits: 2 
                           })}</td>

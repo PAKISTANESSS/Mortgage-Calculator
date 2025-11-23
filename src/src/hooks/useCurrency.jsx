@@ -5,20 +5,17 @@ const currencies = {
   EUR: {
     code: 'EUR',
     symbol: '€',
-    name: 'Euro',
-    locale: 'de-DE'
+    name: 'Euro'
   },
   USD: {
     code: 'USD',
     symbol: '$',
-    name: 'US Dollar',
-    locale: 'en-US'
+    name: 'US Dollar'
   },
   GBP: {
     code: 'GBP',
     symbol: '£',
-    name: 'British Pound',
-    locale: 'en-GB'
+    name: 'British Pound'
   }
 }
 
