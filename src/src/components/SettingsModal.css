@@ -1,0 +1,229 @@
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9998;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.settings-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  z-index: 9999;
+  animation: slideUp 0.3s ease;
+  margin: 0;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #f0f0f0;
+  background: linear-gradient(135deg, #f7fafc 0%, #ffffff 100%);
+}
+
+.settings-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #a0aec0;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.settings-close:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+.settings-content {
+  padding: 2rem;
+  max-height: calc(90vh - 100px);
+  overflow-y: auto;
+}
+
+.settings-section {
+  margin-bottom: 2rem;
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section-title {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4a5568;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settings-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  background: white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.settings-option:hover {
+  border-color: var(--theme-primary, #667eea);
+  background: #f7fafc;
+  transform: translateX(4px);
+}
+
+.settings-option.active {
+  border-color: var(--theme-primary, #667eea);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.settings-theme-preview {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.settings-currency-symbol {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #4a5568;
+  flex-shrink: 0;
+}
+
+.settings-option-name {
+  flex: 1;
+  color: #4a5568;
+  font-weight: 600;
+}
+
+.settings-check {
+  color: var(--theme-primary, #667eea);
+  font-weight: bold;
+  font-size: 1.3rem;
+  background: rgba(102, 126, 234, 0.15);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Scrollbar styling */
+.settings-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 10px;
+}
+
+.settings-content::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+@media (max-width: 640px) {
+  .settings-modal {
+    width: 95%;
+    max-height: 85vh;
+  }
+
+  .settings-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .settings-title {
+    font-size: 1.25rem;
+  }
+
+  .settings-content {
+    padding: 1.5rem;
+  }
+
+  .settings-option {
+    padding: 0.875rem;
+  }
+}
+

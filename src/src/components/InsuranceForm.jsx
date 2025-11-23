@@ -1,4 +1,5 @@
 import { useLanguage } from '../hooks/useLanguage'
+import { useCurrency } from '../hooks/useCurrency'
 
 function InsuranceForm({ 
   lifeInsurance, 
@@ -9,6 +10,7 @@ function InsuranceForm({
   setIsExpanded 
 }) {
   const { t } = useLanguage()
+  const { currency } = useCurrency()
   
   // Validate numeric input
   const handleNumericInput = (value, setter) => {
@@ -38,7 +40,7 @@ function InsuranceForm({
           <div className="input-group">
             <label htmlFor="lifeInsurance">
               <span className="label-text">{t.lifeInsurance}</span>
-              <span className="label-unit">{t.perMonth}</span>
+              <span className="label-unit">{currency.symbol}{t.perMonth}</span>
             </label>
             <input
               id="lifeInsurance"
@@ -53,7 +55,7 @@ function InsuranceForm({
           <div className="input-group">
             <label htmlFor="houseInsurance">
               <span className="label-text">{t.houseInsurance}</span>
-              <span className="label-unit">{t.perMonth}</span>
+              <span className="label-unit">{currency.symbol}{t.perMonth}</span>
             </label>
             <input
               id="houseInsurance"

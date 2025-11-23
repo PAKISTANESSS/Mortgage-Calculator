@@ -16,6 +16,12 @@ export default {
   linkCopied: 'Link Copiado!',
   shareCalculation: 'Partilhar este cálculo',
   
+  // Settings
+  settings: 'Definições',
+  language: 'Idioma',
+  theme: 'Tema',
+  currency: 'Moeda',
+  
   // Basic Info
   basicInfo: 'Informações Básicas',
   loanAmount: 'Montante do Empréstimo',
@@ -29,7 +35,7 @@ export default {
   insurance: 'Seguro (Opcional)',
   lifeInsurance: 'Seguro de Vida',
   houseInsurance: 'Seguro de Casa',
-  perMonth: '€/mês',
+  perMonth: '/mês',
   
   // Amortization Rules
   amortizationRules: 'Regras de Amortização',

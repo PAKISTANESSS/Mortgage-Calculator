@@ -1,7 +1,9 @@
 import { useLanguage } from '../hooks/useLanguage'
+import { useCurrency } from '../hooks/useCurrency'
 
 function BalanceComparisonChart({ loanAmount, scheduleWithoutExtra, amortizationSchedule }) {
   const { t } = useLanguage()
+  const { currency } = useCurrency()
   
   return (
     <div className="line-chart">
@@ -33,7 +35,7 @@ function BalanceComparisonChart({ loanAmount, scheduleWithoutExtra, amortization
                 fontSize="12"
                 fill="#718096"
               >
-                {Math.round(value / 1000)}k€
+                {currency.symbol}{Math.round(value / 1000)}k
               </text>
             )
           })

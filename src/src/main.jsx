@@ -6,17 +6,20 @@ import PaymentCalculator from './PaymentCalculator.jsx'
 import AmortizationCalculator from './AmortizationCalculator.jsx'
 import Navigation from './Navigation.jsx'
 import { LanguageProvider } from './hooks/useLanguage.jsx'
+import { CurrencyProvider } from './hooks/useCurrency.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <LanguageProvider>
-      <BrowserRouter>
-        <Navigation />
-        <Routes>
-          <Route path="/" element={<PaymentCalculator />} />
-          <Route path="/amortization" element={<AmortizationCalculator />} />
-        </Routes>
-      </BrowserRouter>
+      <CurrencyProvider>
+        <BrowserRouter>
+          <Navigation />
+          <Routes>
+            <Route path="/" element={<PaymentCalculator />} />
+            <Route path="/amortization" element={<AmortizationCalculator />} />
+          </Routes>
+        </BrowserRouter>
+      </CurrencyProvider>
     </LanguageProvider>
   </StrictMode>,
 )

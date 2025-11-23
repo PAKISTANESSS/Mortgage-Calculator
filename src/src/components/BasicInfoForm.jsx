@@ -1,7 +1,9 @@
 import { useLanguage } from '../hooks/useLanguage'
+import { useCurrency } from '../hooks/useCurrency'
 
 function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, setEuribor, spread, setSpread, errors = {} }) {
   const { t } = useLanguage()
+  const { currency } = useCurrency()
   
   // Validate numeric input
   const handleNumericInput = (value, setter, allowDecimals = false) => {
@@ -23,7 +25,7 @@ function BasicInfoForm({ loanAmount, setLoanAmount, months, setMonths, euribor, 
       <div className="input-group">
         <label htmlFor="loanAmount">
           <span className="label-text">{t.loanAmount}</span>
-          <span className="label-unit">€</span>
+          <span className="label-unit">{currency.symbol}</span>
         </label>
         <input
           id="loanAmount"

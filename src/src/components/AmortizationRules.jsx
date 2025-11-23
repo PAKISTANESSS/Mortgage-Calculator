@@ -1,4 +1,5 @@
 import { useLanguage } from '../hooks/useLanguage'
+import { useCurrency } from '../hooks/useCurrency'
 
 function AmortizationRules({
   amortizationRules,
@@ -7,6 +8,7 @@ function AmortizationRules({
   setRecalculatePayment
 }) {
   const { t } = useLanguage()
+  const { currency } = useCurrency()
   
   const addRule = () => {
     setAmortizationRules([...amortizationRules, { type: 'recurring', frequency: '', period: 'month', amount: '', month: '', year: '' }])
@@ -148,7 +150,7 @@ function AmortizationRules({
                   min="0"
                   step="100"
                 />
-                <span style={{ marginLeft: '0.5rem', color: '#4a5568', fontWeight: '600', fontSize: '1rem' }}>€</span>
+                <span style={{ marginLeft: '0.5rem', color: '#4a5568', fontWeight: '600', fontSize: '1rem' }}>{currency.symbol}</span>
               </div>
               
               <div className="rule-input-group">

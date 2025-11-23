@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import './Calculator.css'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { useLanguage } from './hooks/useLanguage'
+import { useCurrency } from './hooks/useCurrency'
 import { 
   calculateAmortizationSchedule, 
   calculateScheduleWithoutExtra,
@@ -22,6 +23,7 @@ import ShareButton from './components/ShareButton'
 
 function AmortizationCalculator() {
   const { t, locale } = useLanguage()
+  const { currency } = useCurrency()
   // Form state with localStorage persistence
   const [loanAmount, setLoanAmount] = useLocalStorage('loanAmount', '')
   const [months, setMonths] = useLocalStorage('months', '')
@@ -228,10 +230,10 @@ function AmortizationCalculator() {
                       <div>
                         <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} {firstYear.year}</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
-                          €{firstYear.avgBase.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {currency.symbol}{firstYear.avgBase.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           {firstYear.avgTotal !== firstYear.avgBase && (
                             <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
-                              → (€{firstYear.avgTotal.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                              → ({currency.symbol}{firstYear.avgTotal.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                             </span>
                           )}
                         </div>
@@ -239,10 +241,10 @@ function AmortizationCalculator() {
                       <div>
                         <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} {thirtyPercent.year}</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
-                          €{thirtyPercent.avgBase.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {currency.symbol}{thirtyPercent.avgBase.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           {thirtyPercent.avgTotal !== thirtyPercent.avgBase && (
                             <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
-                              → (€{thirtyPercent.avgTotal.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                              → ({currency.symbol}{thirtyPercent.avgTotal.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                             </span>
                           )}
                         </div>
@@ -250,10 +252,10 @@ function AmortizationCalculator() {
                       <div>
                         <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>{t.year} {sixtyPercent.year}</div>
                         <div className="result-amount" style={{ fontSize: '1.5rem' }}>
-                          €{sixtyPercent.avgBase.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {currency.symbol}{sixtyPercent.avgBase.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           {sixtyPercent.avgTotal !== sixtyPercent.avgBase && (
                             <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', marginLeft: '0.5rem' }}>
-                              → (€{sixtyPercent.avgTotal.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                              → ({currency.symbol}{sixtyPercent.avgTotal.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                             </span>
                           )}
                         </div>
@@ -269,11 +271,11 @@ function AmortizationCalculator() {
                 </div>
                 <div className="detail-item">
                   <span>{t.totalAmountPaid}:</span>
-                  <span>€{calculateTotalAmountPaid(amortizationSchedule).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>{currency.symbol}{calculateTotalAmountPaid(amortizationSchedule).toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="detail-item">
                   <span>{t.totalInterest}:</span>
-                  <span>€{totalInterest.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>{currency.symbol}{totalInterest.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             </div>
@@ -371,19 +373,19 @@ function AmortizationCalculator() {
                         <tr key={`${row.month}-${index}`} className={row.isYearlySummary ? 'yearly-summary' : ''}>
                           <td>{row.year}</td>
                           <td>{row.month}</td>
-                          <td>€{row.principal.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                          <td>€{row.interest.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td>{currency.symbol}{row.principal.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td>{currency.symbol}{row.interest.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
-                            <td>€{row.insurance.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td>{currency.symbol}{row.insurance.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           )}
-                          <td>€{row.basePayment.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td>{currency.symbol}{row.basePayment.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           {amortizationRules.length > 0 && (
                             <td style={{ color: row.extraAmortization > 0 ? '#38a169' : '#4a5568', fontWeight: row.extraAmortization > 0 ? '600' : 'normal' }}>
-                              €{row.extraAmortization.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              {currency.symbol}{row.extraAmortization.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </td>
                           )}
-                          <td>€{row.totalPayment.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                          <td>€{row.balance.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td>{currency.symbol}{row.totalPayment.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td>{currency.symbol}{row.balance.toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -391,44 +393,44 @@ function AmortizationCalculator() {
                       <tr className="table-total">
                         <td colSpan="2" style={{ fontWeight: '700', textAlign: 'left' }}>{t.total}</td>
                         <td style={{ fontWeight: '700' }}>
-                          €{amortizationSchedule
+                          {currency.symbol}{amortizationSchedule
                             .filter(row => !row.isYearlySummary)
                             .reduce((sum, row) => sum + row.principal, 0)
-                            .toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            .toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td style={{ fontWeight: '700' }}>
-                          €{amortizationSchedule
+                          {currency.symbol}{amortizationSchedule
                             .filter(row => !row.isYearlySummary)
                             .reduce((sum, row) => sum + row.interest, 0)
-                            .toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            .toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         {(parseFloat(lifeInsurance) > 0 || parseFloat(houseInsurance) > 0) && (
                           <td style={{ fontWeight: '700' }}>
-                            €{amortizationSchedule
+                            {currency.symbol}{amortizationSchedule
                               .filter(row => !row.isYearlySummary)
                               .reduce((sum, row) => sum + row.insurance, 0)
-                              .toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              .toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                         )}
                         <td style={{ fontWeight: '700' }}>
-                          €{amortizationSchedule
+                          {currency.symbol}{amortizationSchedule
                             .filter(row => !row.isYearlySummary)
                             .reduce((sum, row) => sum + row.basePayment, 0)
-                            .toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            .toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         {amortizationRules.length > 0 && (
                           <td style={{ fontWeight: '700', color: '#38a169' }}>
-                            €{amortizationSchedule
+                            {currency.symbol}{amortizationSchedule
                               .filter(row => !row.isYearlySummary)
                               .reduce((sum, row) => sum + row.extraAmortization, 0)
-                              .toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              .toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                         )}
                         <td style={{ fontWeight: '700' }}>
-                          €{amortizationSchedule
+                          {currency.symbol}{amortizationSchedule
                             .filter(row => !row.isYearlySummary)
                             .reduce((sum, row) => sum + row.totalPayment, 0)
-                            .toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            .toLocaleString(currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td style={{ fontWeight: '700' }}>—</td>
                       </tr>

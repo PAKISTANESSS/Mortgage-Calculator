@@ -16,6 +16,12 @@ export default {
   linkCopied: 'Link Copied!',
   shareCalculation: 'Share this calculation',
   
+  // Settings
+  settings: 'Settings',
+  language: 'Language',
+  theme: 'Theme',
+  currency: 'Currency',
+  
   // Basic Info
   basicInfo: 'Basic Information',
   loanAmount: 'Loan Amount',
@@ -29,7 +35,7 @@ export default {
   insurance: 'Insurance (Optional)',
   lifeInsurance: 'Life Insurance',
   houseInsurance: 'House Insurance',
-  perMonth: '€/month',
+  perMonth: '/month',
   
   // Amortization Rules
   amortizationRules: 'Amortization Rules',
