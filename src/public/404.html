@@ -6,21 +6,17 @@
     <title>Mortgage Calculator</title>
     <script type="text/javascript">
       ;(function (l) {
-        var pathSegmentsToKeep = 1
-        var base = l.pathname
-          .split('/')
-          .slice(0, 1 + pathSegmentsToKeep)
-          .join('/')
+        var segments = l.pathname.split('/')
+        var baseSegment = segments[1] || ''
+        var basePath = baseSegment ? '/' + baseSegment : ''
+        var path = segments.slice(2).join('/')
         var newUrl =
           l.protocol +
           '//' +
           l.host +
-          base +
+          basePath +
           '/?/' +
-          l.pathname
-            .split('/')
-            .slice(1 + pathSegmentsToKeep)
-            .join('/') +
+          path +
           l.search.replace(/&/g, '~and~') +
           l.hash
         l.replace(newUrl)
