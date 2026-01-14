@@ -12,7 +12,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <LanguageProvider>
       <CurrencyProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
           <Navigation />
           <Routes>
             <Route path="/" element={<PaymentCalculator />} />
