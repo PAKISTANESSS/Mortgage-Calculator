@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mortgage Calculator</title>
+    <script type="text/javascript">
+      ;(function (l) {
+        var pathSegmentsToKeep = 1
+        var base = l.pathname
+          .split('/')
+          .slice(0, 1 + pathSegmentsToKeep)
+          .join('/')
+        var newUrl =
+          l.protocol +
+          '//' +
+          l.host +
+          base +
+          '/?/' +
+          l.pathname
+            .split('/')
+            .slice(1 + pathSegmentsToKeep)
+            .join('/') +
+          l.search.replace(/&/g, '~and~') +
+          l.hash
+        l.replace(newUrl)
+      })(window.location)
+    </script>
+  </head>
+  <body></body>
+</html>
+
